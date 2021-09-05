@@ -2,12 +2,12 @@ package pers.kaoru.rfs.core;
 
 import java.io.File;
 
-public interface ImplFileOperation {
+public interface ImplFileOperator {
 
     /**
      * 对应 ls 命令
      * @param source 必须为一个目录
-     * @return 是否操作成功
+     * @return 目录下文件列表
      */
     File[] listShow(File source);
 

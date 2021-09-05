@@ -1,7 +1,7 @@
 package pers.kaoru.rfs.core;
 
-import java.io.File;
-import java.io.Serializable;
+import java.io.*;
+import java.util.LinkedList;
 
 public class FileInfo implements Serializable {
 
@@ -17,6 +17,29 @@ public class FileInfo implements Serializable {
         last = file.lastModified();
     }
 
+    public FileInfo(String name, Boolean isDirectory, Long size, Long last) {
+        this.name = name;
+        this.isDirectory = isDirectory;
+        this.size = size;
+        this.last = last;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Boolean isDirectory() {
+        return isDirectory;
+    }
+
+    public Long getSize() {
+        return size;
+    }
+
+    public Long getLast() {
+        return last;
+    }
+
     @Override
     public String toString() {
         return "FileInfo{" +
@@ -25,5 +48,22 @@ public class FileInfo implements Serializable {
                 ", size=" + size +
                 ", last=" + last +
                 '}';
+    }
+
+    public static LinkedList<FileInfo> FileInfosBuild(String string) {
+        LinkedList<FileInfo> fileInfos = new LinkedList<>();
+        string = string.substring(1, string.length() - 2);
+        String[] elements = string.split("}, ");
+        for (String element : elements) {
+            element = element.substring(9);
+            String[] subElements = element.split(", ");
+
+            String name = subElements[0].split("=")[1];
+            Boolean isDirectory = Boolean.parseBoolean(subElements[1].split("=")[1]);
+            Long size = Long.parseLong(subElements[2].split("=")[1]);
+            Long last = Long.parseLong(subElements[3].split("=")[1]);
+            fileInfos.add(new FileInfo(name, isDirectory, size, last));
+        }
+        return fileInfos;
     }
 }

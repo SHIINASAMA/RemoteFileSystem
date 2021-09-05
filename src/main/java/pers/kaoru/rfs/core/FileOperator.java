@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class FileOperator implements ImplFileOperation {
+public class FileOperator implements ImplFileOperator {
 
     @Override
     public File[] listShow(File source) {
