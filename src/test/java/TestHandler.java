@@ -10,7 +10,10 @@ import java.util.LinkedList;
 public class TestHandler extends Thread {
 
     public static void main(String[] args) throws IOException {
-        testListShow();
+//        testListShow();
+//        testRemove();
+//        testCopy();
+//        testMove();
     }
 
     @Override
@@ -18,7 +21,7 @@ public class TestHandler extends Thread {
         try {
             ServerSocket server = new ServerSocket(8080);
             Socket client = server.accept();
-            ImplHandler handler = new MainHandler();
+            ImplHandler handler = new MainHandler("E:/");
             handler.handle(client);
 
         } catch (IOException exception) {
@@ -49,5 +52,76 @@ public class TestHandler extends Thread {
         } else {
             System.out.println("Client> " + response.getHeader("error"));
         }
+        socket.shutdownOutput();
+        socket.shutdownInput();
+        socket.close();
+    }
+
+    private static void testRemove() throws IOException {
+        TestHandler testHandler = new TestHandler();
+        testHandler.start();
+
+        Socket socket = new Socket("localhost", 8080);
+
+        Request request = new Request();
+        request.setMethod(RequestMethod.REMOVE);
+        request.setHeader("source", "/");
+        WebUtils.WriteRequest(socket, request);
+
+        Response response = WebUtils.ReadResponse(socket);
+        System.out.println("Client> " + response.getCode());
+        if (response.getCode() == ResponseCode.FAIL) {
+            System.out.println("Client> " + response.getHeader("error"));
+        }
+
+        socket.shutdownOutput();
+        socket.shutdownInput();
+        socket.close();
+    }
+
+    private static void testCopy() throws IOException {
+        TestHandler testHandler = new TestHandler();
+        testHandler.start();
+
+        Socket socket = new Socket("localhost", 8080);
+
+        Request request = new Request();
+        request.setMethod(RequestMethod.COPY);
+        request.setHeader("source", "/test0");
+        request.setHeader("destination", "/test1");
+        WebUtils.WriteRequest(socket, request);
+
+        Response response = WebUtils.ReadResponse(socket);
+        System.out.println("Client> " + response.getCode());
+        if (response.getCode() == ResponseCode.FAIL) {
+            System.out.println("Client> " + response.getHeader("error"));
+        }
+
+        socket.shutdownOutput();
+        socket.shutdownInput();
+        socket.close();
+    }
+
+    private static void testMove() throws IOException {
+        TestHandler testHandler = new TestHandler();
+        testHandler.start();
+
+        Socket socket = new Socket("localhost", 8080);
+
+        Request request = new Request();
+        request.setMethod(RequestMethod.MOVE);
+        request.setHeader("source", "/test0");
+        request.setHeader("destination", "/test1");
+        WebUtils.WriteRequest(socket, request);
+
+        Response response = WebUtils.ReadResponse(socket);
+        System.out.println("Client> " + response.getCode());
+        if (response.getCode() == ResponseCode.FAIL) {
+            System.out.println("Client> " + response.getHeader("error"));
+        }
+
+        socket.shutdownOutput();
+        socket.shutdownInput();
+        socket.close();
     }
 }
