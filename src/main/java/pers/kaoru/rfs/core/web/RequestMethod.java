@@ -6,6 +6,7 @@ public enum RequestMethod {
     REMOVE,
     COPY,
     MOVE,
+    MAKE_DIRECTORY,
 
     // 传输文件操作
     UPLOAD,

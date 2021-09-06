@@ -75,4 +75,12 @@ public class FileOperator implements ImplFileOperator {
         }
         return false;
     }
+
+    @Override
+    public boolean makeDirectory(File source) {
+        if(source.exists()){
+            return false;
+        }
+        return source.mkdirs();
+    }
 }

@@ -34,4 +34,11 @@ public interface ImplFileOperator {
      */
     boolean move(File source, File destination);
 
+    /**
+     * 对应 mkdir 命令，创建文件夹
+     * @param source 源位置
+     * @return 是否操作成功
+     */
+    boolean makeDirectory(File source);
+
 }

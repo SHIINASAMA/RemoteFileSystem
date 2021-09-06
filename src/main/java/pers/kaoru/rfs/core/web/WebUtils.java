@@ -34,6 +34,9 @@ public class WebUtils {
             case "MOVE":
                 request.setMethod(RequestMethod.MOVE);
                 break;
+            case "MAKE_DIRECTORY":
+                request.setMethod(RequestMethod.MAKE_DIRECTORY);
+                break;
             case "DOWNLOAD":
                 request.setMethod(RequestMethod.DOWNLOAD);
                 break;

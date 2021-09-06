@@ -1,6 +1,9 @@
 import pers.kaoru.rfs.core.FileInfo;
 import pers.kaoru.rfs.core.web.*;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -14,14 +17,19 @@ public class TestHandler extends Thread {
 //        testRemove();
 //        testCopy();
 //        testMove();
+//        testMakeDirectory();
+//        testUpload();
+//        testDownload();
     }
 
     @Override
     public void run() {
         try {
             ServerSocket server = new ServerSocket(8080);
-            Socket client = server.accept();
             ImplHandler handler = new MainHandler("E:/");
+            Socket client = server.accept();
+            handler.handle(client);
+            client = server.accept();
             handler.handle(client);
 
         } catch (IOException exception) {
@@ -123,5 +131,121 @@ public class TestHandler extends Thread {
         socket.shutdownOutput();
         socket.shutdownInput();
         socket.close();
+    }
+
+    private static void testMakeDirectory() throws IOException {
+        TestHandler testHandler = new TestHandler();
+        testHandler.start();
+
+        Socket socket = new Socket("localhost", 8080);
+
+        Request request = new Request();
+        request.setMethod(RequestMethod.MAKE_DIRECTORY);
+        request.setHeader("source", "/test0");
+        WebUtils.WriteRequest(socket, request);
+
+        Response response = WebUtils.ReadResponse(socket);
+        System.out.println("Client> " + response.getCode());
+        if (response.getCode() == ResponseCode.FAIL) {
+            System.out.println("Client> " + response.getHeader("error"));
+        }
+
+        socket.shutdownOutput();
+        socket.shutdownInput();
+        socket.close();
+    }
+
+    private static void testUpload() throws IOException {
+        TestHandler testHandler = new TestHandler();
+        testHandler.start();
+
+        Socket socket = new Socket("localhost", 8080);
+
+        File file = new File("D:/aria2/aria2.conf");
+        Range range = new Range(0L, file.length() - 1, file.length());
+        Request request = new Request();
+        request.setMethod(RequestMethod.UPLOAD);
+        request.setHeader("source", "/aria2.conf");
+        request.setHeader("range", range.toString());
+        WebUtils.WriteRequest(socket, request);
+
+        var webStream = socket.getOutputStream();
+        var localStream = new FileInputStream(file);
+
+        byte[] bytes = new byte[1024];
+        int count;
+        try {
+            while ((count = localStream.read(bytes)) > 0) {
+                webStream.write(bytes, 0, count);
+            }
+        } finally {
+            Response response = WebUtils.ReadResponse(socket);
+            System.out.println("Client> " + response.getCode());
+            if (response.getCode() == ResponseCode.FAIL) {
+                System.out.println("Client> " + response.getHeader("error"));
+            }
+
+            socket.shutdownOutput();
+            socket.shutdownInput();
+            socket.close();
+        }
+    }
+
+    private static void testDownload() throws IOException {
+        TestHandler testHandler = new TestHandler();
+        testHandler.start();
+
+        Socket socket = new Socket("localhost", 8080);
+        Range range = new Range(0L, 0L, 0L);
+        Request request = new Request();
+        request.setMethod(RequestMethod.DOWNLOAD);
+        request.setHeader("source", "/test");
+        request.setHeader("range", range.toString());
+        WebUtils.WriteRequest(socket, request);
+        Response response = WebUtils.ReadResponse(socket);
+        String rangeStr = response.getHeader("range");
+        assert rangeStr != null;
+        range = Range.RangeBuild(rangeStr);
+        range = new Range(0L, range.getTotal() - 1, range.getTotal());
+        socket.shutdownOutput();
+        socket.shutdownInput();
+        socket.close();
+
+        socket = new Socket("localhost", 8080);
+        request.setHeader("range", range.toString());
+        WebUtils.WriteRequest(socket, request);
+
+        var webStream = socket.getInputStream();
+        var localStream = new FileOutputStream("D:/test");
+
+        byte[] bytes = new byte[1024];
+        long count = range.getTotal();
+        try {
+            while (count > 0) {
+                long current;
+                if (count > 1024) {
+                    current = 1024;
+                } else {
+                    current = count;
+                }
+                long length = webStream.read(bytes, 0, (int) current);
+                if (length == -1) {
+                    break;
+                }
+                count -= length;
+                localStream.write(bytes, 0, (int) length);
+            }
+
+        } finally {
+            response = WebUtils.ReadResponse(socket);
+            System.out.println("Client> " + response.getCode());
+            if (response.getCode() == ResponseCode.FAIL) {
+                System.out.println("Client> " + response.getHeader("error"));
+            }
+
+            socket.shutdownOutput();
+            socket.shutdownInput();
+            socket.close();
+        }
     }
 }
