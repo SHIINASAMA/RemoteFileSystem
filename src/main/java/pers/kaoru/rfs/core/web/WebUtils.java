@@ -1,8 +1,18 @@
 package pers.kaoru.rfs.core.web;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTCreator;
+import com.auth0.jwt.JWTVerifier;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.interfaces.DecodedJWT;
+
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class WebUtils {
 
@@ -91,5 +101,41 @@ public class WebUtils {
         }
 
         return response;
+    }
+
+    private static final long TokenExpireDate = 60 * 60 * 1000;
+    private static final String TokenSecret = "pers.kaoru.rfs.core.web.WebUtils";
+
+    public static String MakeToken(String name, String password) {
+        Date date = new Date(System.currentTimeMillis() + TokenExpireDate);
+
+        Map<String, Object> headers = new HashMap<>();
+        headers.put("typ", "JWT");
+        headers.put("alg", "HS256");
+
+        String token = JWT.create()
+                .withHeader(headers)
+                .withClaim("username", name)
+                .withClaim("password", password)
+                .withExpiresAt(date)
+                .sign(Algorithm.HMAC256(TokenSecret));
+
+        return token;
+    }
+
+    public static Map<String, String> VerifyToken(String token) {
+        try {
+            Map<String, String> headers = new TreeMap<>();
+            JWTVerifier verifier = JWT.require(Algorithm.HMAC256(TokenSecret)).build();
+            DecodedJWT decodedJWT = verifier.verify(token);
+            String name = decodedJWT.getClaim("username").asString();
+            String pwd = decodedJWT.getClaim("password").asString();
+            headers.put("username", name);
+            headers.put("password", pwd);
+            return headers;
+        }catch (Exception exception){
+            exception.printStackTrace();
+            return null;
+        }
     }
 }
