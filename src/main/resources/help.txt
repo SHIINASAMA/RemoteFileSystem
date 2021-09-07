@@ -1,0 +1,42 @@
+.______       _______     _______.
+|   _  \     |   ____|   /       |
+|  |_)  |    |  |__     |   (----`
+|      /     |   __|     \   \
+|  |\  \----.|  |    .----)   |
+| _| `._____||__|    |_______/
+
+Thank you for use this program.
+
+Usage: java -jar RemoteFileSystem.jar [OPTION] ...
+
+  --help            print this page
+
+  --config-path     configuration file path
+
+  [  temp configuration file "config.json"  ]
+  ###########################################
+  #                                         #
+  #  {                                      #
+  #    "host": "localhost",                 #
+  #    "port": 8080,                        #
+  #    "workdirectory": "E:/SharedFiles/",  #
+  #    "users": [                           #
+  #      {                                  #
+  #        "username": "root",              #
+  #        "password": "123",               #
+  #        "permission": "rw"               #
+  #      },                                 #
+  #      {                                  #
+  #        "username": "guest",             #
+  #        "password": "123",               #
+  #        "permission": "r"                #
+  #      }                                  #
+  #    ]                                    #
+  #  }                                      #
+  #                                         #
+  ###########################################
+
+  --launch-mode     program's launch mode
+    test            test the configuration file
+    console         launch on console
+    swing           launch on GUI with swing

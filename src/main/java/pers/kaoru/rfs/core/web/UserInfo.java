@@ -28,4 +28,13 @@ public class UserInfo {
     public UserPermission getPermission() {
         return permission;
     }
+
+    @Override
+    public String toString() {
+        return "UserInfo{" +
+                "name='" + name + '\'' +
+                ", password='" + password + '\'' +
+                ", permission=" + permission +
+                '}';
+    }
 }
