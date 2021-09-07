@@ -1,3 +1,5 @@
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Logger;
 import pers.kaoru.rfs.core.FileInfo;
 import pers.kaoru.rfs.core.web.*;
 
@@ -30,7 +32,7 @@ public class TestHandler extends Thread {
     public void run() {
         try {
             ServerSocket server = new ServerSocket(8080);
-            ImplHandler handler = new MainHandler("E:/");
+            ImplHandler handler = new MainHandler("E:/", (Logger) LogManager.getLogger(LogManager.ROOT_LOGGER_NAME));
             Socket client = server.accept();
             handler.handle(client);
             // 测试 Download 时需要
@@ -270,7 +272,7 @@ public class TestHandler extends Thread {
         Response response = WebUtils.ReadResponse(socket);
 
         System.out.println("Client> " + response.getCode());
-        for(var kv : response.getHeaders().entrySet()){
+        for (var kv : response.getHeaders().entrySet()) {
             System.out.println("Client> " + kv.getKey() + ": " + kv.getValue());
         }
     }

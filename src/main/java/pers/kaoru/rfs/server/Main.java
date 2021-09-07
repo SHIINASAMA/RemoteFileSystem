@@ -1,9 +1,16 @@
 package pers.kaoru.rfs.server;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Logger;
+import pers.kaoru.rfs.server.console.Console;
+
 import java.io.*;
 import java.util.Properties;
 
 public class Main {
+
+    public static Logger log;
 
     // 配置文件路径
     private static final String ARGS_CONFIG_PATH = "--config-path";
@@ -15,6 +22,9 @@ public class Main {
     private static final String ARGS_LAUNCH_MODE_SWING = "swing";
 
     public static void main(String[] args) {
+
+        log = (Logger) LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
+        log.setLevel(Level.DEBUG);
 
         String path = "./config.json";
         String mode = "test";
@@ -30,7 +40,7 @@ public class Main {
             }
 
             if (args.length % 2 == 1) {
-                System.out.println("Illegal argument");
+                log.warn("Illegal argument");
                 return;
             }
 
@@ -43,7 +53,7 @@ public class Main {
                         mode = args[++i];
                         break;
                     default:
-                        System.out.println("unknown argument, near by: " + args[i]);
+                        log.warn("unknown argument, near by: " + args[i]);
                         return;
                 }
             }
@@ -56,9 +66,14 @@ public class Main {
         try {
             config = Config.ConfigBuild(path);
         } catch (IOException exception) {
-            System.out.println("error: " + exception.getMessage());
+            log.warn("error: " + exception.getMessage());
             return;
         }
+
+//        if(config.getWorkDirectory().contains("..")){
+//            System.out.println("error: invalid path \"" + config.getWorkDirectory() + "\"");
+//            return;
+//        }
 
         switch (mode) {
             case ARGS_LAUNCH_MODE_TEST:
@@ -71,11 +86,17 @@ public class Main {
                 }
                 break;
             case ARGS_LAUNCH_MODE_CONSOLE:
+                try {
+                    Console console = new Console(config.getHost(), config.getPort(), 10, config.getWorkDirectory());
+                    console.exec();
+                } catch (IOException exception) {
+                    log.info("fail to start service");
+                }
                 break;
             case ARGS_LAUNCH_MODE_SWING:
                 break;
             default:
-                System.out.println("unknown mode: " + mode);
+                log.warn("unknown mode: " + mode);
                 break;
         }
     }
