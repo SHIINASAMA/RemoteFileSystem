@@ -10,6 +10,9 @@ import java.net.Socket;
 import java.util.Date;
 import java.util.LinkedList;
 
+/**
+ * @deprecated MainHandler 添加权限控制，不再适用
+ */
 public class TestHandler extends Thread {
 
     public static void main(String[] args) throws IOException {
@@ -20,6 +23,7 @@ public class TestHandler extends Thread {
 //        testMakeDirectory();
 //        testUpload();
 //        testDownload();
+        testVerify();
     }
 
     @Override
@@ -29,8 +33,9 @@ public class TestHandler extends Thread {
             ImplHandler handler = new MainHandler("E:/");
             Socket client = server.accept();
             handler.handle(client);
-            client = server.accept();
-            handler.handle(client);
+            // 测试 Download 时需要
+//            client = server.accept();
+//            handler.handle(client);
 
         } catch (IOException exception) {
             exception.printStackTrace();
@@ -246,6 +251,27 @@ public class TestHandler extends Thread {
             socket.shutdownOutput();
             socket.shutdownInput();
             socket.close();
+        }
+    }
+
+    private static void testVerify() throws IOException {
+
+        TestHandler testHandler = new TestHandler();
+        testHandler.start();
+
+        Socket socket = new Socket("localhost", 8080);
+
+        Request request = new Request();
+        request.setMethod(RequestMethod.VERIFY);
+        request.setHeader("username", "kaoru");
+        request.setHeader("password", "123");
+
+        WebUtils.WriteRequest(socket, request);
+        Response response = WebUtils.ReadResponse(socket);
+
+        System.out.println("Client> " + response.getCode());
+        for(var kv : response.getHeaders().entrySet()){
+            System.out.println("Client> " + kv.getKey() + ": " + kv.getValue());
         }
     }
 }

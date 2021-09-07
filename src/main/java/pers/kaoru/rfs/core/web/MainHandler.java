@@ -12,10 +12,12 @@ public class MainHandler implements ImplHandler {
 
     private final ImplFileOperator operator;
     private final String prefixPath;
+    private final UserManger userManger;
 
     public MainHandler(String prefixPath) {
         this.prefixPath = prefixPath;
         operator = new FileOperator();
+        userManger = new UserManger();
     }
 
     @Override
@@ -46,6 +48,7 @@ public class MainHandler implements ImplHandler {
                     download(socket, request, response);
                     break;
                 case VERIFY:
+                    verify(socket, request, response);
                     break;
                 default:
                     break;
@@ -64,7 +67,42 @@ public class MainHandler implements ImplHandler {
         }
     }
 
+    private boolean checkPermission(Request request, Response response, UserPermission permission) {
+        String token = request.getHeader("token");
+        if (token == null) {
+            response.setCode(ResponseCode.FAIL);
+            response.setHeader("error", "Request a token");
+            return false;
+        }
+
+        var result = WebUtils.VerifyToken(token);
+        if (result == null) {
+            response.setCode(ResponseCode.FAIL);
+            response.setHeader("error", "Invalid token");
+            return false;
+        }
+
+        UserInfo info = userManger.getUser(result.get("username"));
+        if (info == null) {
+            response.setCode(ResponseCode.FAIL);
+            response.setHeader("error", "No user");
+            return false;
+        }
+
+        if (!UserManger.VerifyPermission(info, permission)) {
+            response.setCode(ResponseCode.FAIL);
+            response.setHeader("error", "Permission denied");
+            return false;
+        }
+
+        return true;
+    }
+
     private void listShow(Socket socket, Request request, Response response) throws IOException {
+        if (!checkPermission(request, response, UserPermission.READ)) {
+            return;
+        }
+
         String source = request.getHeader("source");
         if (source == null) {
             response.setCode(ResponseCode.FAIL);
@@ -89,6 +127,10 @@ public class MainHandler implements ImplHandler {
     }
 
     private void remove(Socket socket, Request request, Response response) throws IOException {
+        if (!checkPermission(request, response, UserPermission.BOTH)) {
+            return;
+        }
+
         String source = request.getHeader("source");
         if (source == null) {
             response.setCode(ResponseCode.FAIL);
@@ -118,6 +160,10 @@ public class MainHandler implements ImplHandler {
     }
 
     private void copy(Socket socket, Request request, Response response) throws IOException {
+        if (!checkPermission(request, response, UserPermission.BOTH)) {
+            return;
+        }
+
         String source = request.getHeader("source");
         String destination = request.getHeader("destination");
         if (source == null || destination == null) {
@@ -142,6 +188,10 @@ public class MainHandler implements ImplHandler {
     }
 
     private void move(Socket socket, Request request, Response response) throws IOException {
+        if (!checkPermission(request, response, UserPermission.BOTH)) {
+            return;
+        }
+
         String source = request.getHeader("source");
         String destination = request.getHeader("destination");
         if (source == null || destination == null) {
@@ -166,6 +216,10 @@ public class MainHandler implements ImplHandler {
     }
 
     private void makeDirectory(Socket socket, Request request, Response response) throws IOException {
+        if (!checkPermission(request, response, UserPermission.BOTH)) {
+            return;
+        }
+
         String source = request.getHeader("source");
         if (source == null) {
             response.setCode(ResponseCode.FAIL);
@@ -188,6 +242,10 @@ public class MainHandler implements ImplHandler {
     }
 
     private void upload(Socket socket, Request request, Response response) throws IOException {
+        if (!checkPermission(request, response, UserPermission.BOTH)) {
+            return;
+        }
+
         String source = request.getHeader("source");
         String rangeStr = request.getHeader("range");
         if (source == null || rangeStr == null) {
@@ -244,6 +302,10 @@ public class MainHandler implements ImplHandler {
     }
 
     private void download(Socket socket, Request request, Response response) throws IOException {
+        if (!checkPermission(request, response, UserPermission.READ)) {
+            return;
+        }
+
         String source = request.getHeader("source");
         String rangeStr = request.getHeader("range");
 
@@ -289,5 +351,26 @@ public class MainHandler implements ImplHandler {
             response.setCode(ResponseCode.OK);
             response.setHeader("range", new Range(range.getBegin(), range.getEnd(), srcFile.length()).toString());
         }
+    }
+
+    private void verify(Socket socket, Request request, Response response) throws IOException {
+        String name = request.getHeader("username");
+        String pwd = request.getHeader("password");
+        if (name == null || pwd == null) {
+            response.setCode(ResponseCode.FAIL);
+            response.setHeader("error", "Illegal parameter");
+            return;
+        }
+
+        UserInfo info = userManger.getUser(name);
+        if (info == null) {
+            response.setCode(ResponseCode.FAIL);
+            response.setHeader("error", "No user");
+            return;
+        }
+
+        String token = WebUtils.MakeToken(name, pwd);
+        response.setCode(ResponseCode.OK);
+        response.setHeader("token", token);
     }
 }
