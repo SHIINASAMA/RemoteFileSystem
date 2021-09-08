@@ -1,22 +1,26 @@
 package pers.kaoru.rfs.client;
 
+import pers.kaoru.rfs.core.MD5Utils;
+
 import javax.swing.*;
 import java.awt.*;
 
-public class LoginForm extends JFrame {
+public class LoginForm extends JDialog {
 
     private final JTextField hostTextBox;
     private final JTextField portTextBox;
     private final JTextField nameTextBox;
     private final JPasswordField passwordTextBox;
+    private boolean status = false;
 
     public LoginForm() {
 
+        setModalityType(ModalityType.APPLICATION_MODAL);
         setTitle("Connect and login");
         setSize(400, 200);
         setResizable(false);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new GridLayout(3, 1, 5, 5));
 
         {
@@ -63,13 +67,65 @@ public class LoginForm extends JFrame {
             JPanel panel = new JPanel();
 
             JButton yes = new JButton("Login ");
+            yes.addActionListener(func -> onYes());
             panel.add(yes);
             JButton no = new JButton("Cancel");
+            no.addActionListener(func -> onNo());
             panel.add(no);
 
             add(panel);
         }
 
         setVisible(true);
+    }
+
+    private void onYes() {
+        for (Character c : portTextBox.getText().toCharArray()) {
+            if (!(c >= '0' && c <= '9')) {
+                JOptionPane.showMessageDialog(this, "Port is a number.", "Invalid symbol", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+
+        var host = hostTextBox.getText();
+        var port = portTextBox.getText();
+        var name = nameTextBox.getText();
+        var password = new String(passwordTextBox.getPassword());
+
+        if (host.isEmpty() ||
+                port.isEmpty() ||
+                name.isEmpty() ||
+                password.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please input all parameters.", "Invalid parameter", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        status = true;
+        dispose();
+    }
+
+    private void onNo() {
+        status = false;
+        dispose();
+    }
+
+    public boolean getState() {
+        return status;
+    }
+
+    public String getHost() {
+        return hostTextBox.getText();
+    }
+
+    public int getPort() {
+        return Integer.parseInt(portTextBox.getText());
+    }
+
+    public String getUserName() {
+        return nameTextBox.getText();
+    }
+
+    public String getPwdMd5() {
+        return MD5Utils.GenerateMD5(new String(passwordTextBox.getPassword()));
     }
 }

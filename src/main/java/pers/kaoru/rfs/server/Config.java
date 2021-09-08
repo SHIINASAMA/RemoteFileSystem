@@ -2,6 +2,7 @@ package pers.kaoru.rfs.server;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import pers.kaoru.rfs.core.MD5Utils;
 import pers.kaoru.rfs.core.web.UserInfo;
 import pers.kaoru.rfs.core.web.UserPermission;
 
@@ -76,10 +77,15 @@ public class Config {
                 String name = next.getString("username");
                 String pwd = next.getString("password");
                 String permissionStr = next.getString("permission");
-                if (name != null || pwd != null || permissionStr != null) {
+                if (name != null && pwd != null && permissionStr != null) {
                     UserPermission permission = UserPermission.READ;
                     if (permissionStr.equals("rw")) {
                         permission = UserPermission.BOTH;
+                    }
+                    String rawPwd = pwd;
+                    pwd = MD5Utils.GenerateMD5(pwd);
+                    if (pwd == null){
+                        pwd = rawPwd;
                     }
                     users.push(new UserInfo(name, pwd, permission));
                 }

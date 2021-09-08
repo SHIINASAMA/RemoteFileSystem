@@ -101,6 +101,7 @@ public class Main {
                 break;
             }
             case ARGS_LAUNCH_MODE_CLIENT: {
+                System.out.println("################  CLIENT   ################");
                 try {
                     ImplExecutable client = (ImplExecutable) Class.forName("pers.kaoru.rfs.client.Client")
                             .getDeclaredConstructor()
@@ -113,6 +114,7 @@ public class Main {
                 break;
             }
             case ARGS_LAUNCH_MODE_SERVER:
+                System.out.println("################  SERVER   ################");
                 break;
             default:
                 log.warn("unknown mode: " + mode);
