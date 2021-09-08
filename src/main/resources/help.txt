@@ -11,7 +11,13 @@ Usage: java -jar RemoteFileSystem.jar [OPTION] ...
 
   --help            print this page
 
-  --config-path     configuration file path
+  --launch-mode     program's launch mode
+    test            test the configuration file
+    console         launch server on console
+    server          launch server GUI with swing
+    client          launch client GUI with swing
+
+  --config-path     configuration file path, console and server mode need this argument
 
   [  temp configuration file "config.json"  ]
   ###########################################
@@ -19,7 +25,9 @@ Usage: java -jar RemoteFileSystem.jar [OPTION] ...
   #  {                                      #
   #    "host": "localhost",                 #
   #    "port": 8080,                        #
+  #    "backlog": 10,                       #
   #    "workdirectory": "E:/SharedFiles/",  #
+  #    "threads": 8,                        #
   #    "users": [                           #
   #      {                                  #
   #        "username": "root",              #
@@ -35,8 +43,3 @@ Usage: java -jar RemoteFileSystem.jar [OPTION] ...
   #  }                                      #
   #                                         #
   ###########################################
-
-  --launch-mode     program's launch mode
-    test            test the configuration file
-    console         launch on console
-    swing           launch on GUI with swing

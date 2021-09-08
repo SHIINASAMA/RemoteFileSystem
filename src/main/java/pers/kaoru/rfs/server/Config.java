@@ -7,18 +7,23 @@ import pers.kaoru.rfs.core.web.UserPermission;
 
 import java.io.*;
 import java.util.LinkedList;
+import java.util.function.Predicate;
 
 public class Config {
 
     private final String host;
     private final int port;
+    private final int backlog;
     private final String workDirectory;
+    private final int threads;
     private final LinkedList<UserInfo> users;
 
     public static Config ConfigBuild(String path) throws IOException {
         String host;
         int port;
+        int backlog;
         String wd;
+        int threads;
         LinkedList<UserInfo> users = new LinkedList<>();
 
         File file = new File(path);
@@ -50,6 +55,13 @@ public class Config {
             port = 8080;
         }
 
+        backlog = jsonObject.getIntValue("backlog");
+
+        threads = jsonObject.getIntValue("threads");
+        if (threads <= 0) {
+            threads = 4;
+        }
+
         wd = jsonObject.getString("workdirectory");
         if (wd == null) {
             wd = "/";
@@ -74,13 +86,15 @@ public class Config {
             }
         }
 
-        return new Config(host, port, wd, users);
+        return new Config(host, port, backlog, wd, threads, users);
     }
 
-    private Config(String host, int port, String workDirectory, LinkedList<UserInfo> users) {
+    public Config(String host, int port, int backlog, String workDirectory, int threads, LinkedList<UserInfo> users) {
         this.host = host;
         this.port = port;
+        this.backlog = backlog;
         this.workDirectory = workDirectory;
+        this.threads = threads;
         this.users = users;
     }
 
@@ -92,8 +106,16 @@ public class Config {
         return port;
     }
 
+    public int getBacklog() {
+        return backlog;
+    }
+
     public String getWorkDirectory() {
         return workDirectory;
+    }
+
+    public int getThreads() {
+        return threads;
     }
 
     public LinkedList<UserInfo> getUsers() {

@@ -1,8 +1,9 @@
-package pers.kaoru.rfs.server;
+package pers.kaoru.rfs;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
+import pers.kaoru.rfs.server.Config;
 import pers.kaoru.rfs.server.console.Console;
 
 import java.io.*;
@@ -17,9 +18,10 @@ public class Main {
 
     // 启动模式
     private static final String ARGS_LAUNCH_MODE = "--launch-mode";
+    private static final String ARGS_LAUNCH_MODE_CLIENT = "client";
     private static final String ARGS_LAUNCH_MODE_TEST = "test";
     private static final String ARGS_LAUNCH_MODE_CONSOLE = "console";
-    private static final String ARGS_LAUNCH_MODE_SWING = "swing";
+    private static final String ARGS_LAUNCH_MODE_SERVER = "server";
 
     public static void main(String[] args) {
 
@@ -27,7 +29,7 @@ public class Main {
         log.setLevel(Level.DEBUG);
 
         String path = "./config.json";
-        String mode = "test";
+        String mode = ARGS_LAUNCH_MODE_SERVER;
 
         if (args.length > 0) {
             String baseArg = args[0].toUpperCase();
@@ -62,38 +64,55 @@ public class Main {
         System.out.println("pickup option: " + ARGS_CONFIG_PATH + " " + path);
         System.out.println("pickup option: " + ARGS_LAUNCH_MODE + " " + mode);
 
-        Config config;
-        try {
-            config = Config.ConfigBuild(path);
-        } catch (IOException exception) {
-            log.warn("error: " + exception.getMessage());
-            return;
-        }
-
 //        if(config.getWorkDirectory().contains("..")){
 //            System.out.println("error: invalid path \"" + config.getWorkDirectory() + "\"");
 //            return;
 //        }
 
         switch (mode) {
-            case ARGS_LAUNCH_MODE_TEST:
+            case ARGS_LAUNCH_MODE_TEST: {
+                Config config;
+                try {
+                    config = Config.ConfigBuild(path);
+                } catch (IOException exception) {
+                    log.error(exception.getMessage());
+                    return;
+                }
                 System.out.println("################ Test Mode ################");
                 System.out.println("host:           " + config.getHost());
                 System.out.println("port:           " + config.getPort());
+                System.out.println("backlog:        " + config.getBacklog());
                 System.out.println("word directory: " + config.getWorkDirectory());
+                System.out.println("threads:        " + config.getThreads());
                 for (var user : config.getUsers()) {
                     System.out.println(user);
                 }
                 break;
-            case ARGS_LAUNCH_MODE_CONSOLE:
+            }
+            case ARGS_LAUNCH_MODE_CONSOLE: {
+                System.out.println("################  CONSOLE  ################");
                 try {
-                    Console console = new Console(config.getHost(), config.getPort(), 10, config.getWorkDirectory());
+                    Config config = Config.ConfigBuild(path);
+                    ImplExecutable console = new Console(config.getHost(), config.getPort(), 10, config.getWorkDirectory(), config.getThreads());
                     console.exec();
                 } catch (IOException exception) {
-                    log.info("fail to start service");
+                    log.info("fail to start service, " + exception.getMessage());
                 }
                 break;
-            case ARGS_LAUNCH_MODE_SWING:
+            }
+            case ARGS_LAUNCH_MODE_CLIENT: {
+                try {
+                    ImplExecutable client = (ImplExecutable) Class.forName("pers.kaoru.rfs.client.Client")
+                            .getDeclaredConstructor()
+                            .newInstance();
+                    client.exec();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    log.error(e.getMessage());
+                }
+                break;
+            }
+            case ARGS_LAUNCH_MODE_SERVER:
                 break;
             default:
                 log.warn("unknown mode: " + mode);
@@ -134,6 +153,6 @@ public class Main {
         String date = properties.getProperty("BuildDate");
 
         System.out.println("Version " + major + "." + minor + "[." + rev + "]");
-        System.out.println(by + "build this package on " + date);
+        System.out.println(by + " build this package on " + date);
     }
 }
