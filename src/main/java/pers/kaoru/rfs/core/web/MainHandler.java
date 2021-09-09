@@ -125,7 +125,7 @@ public class MainHandler implements ImplHandler {
 
     private void listShow(Socket socket, Request request, Response response) throws IOException {
         String username = checkPermission(request, response, UserPermission.READ);
-        if (username != null) {
+        if (username == null) {
             return;
         }
 
@@ -161,7 +161,7 @@ public class MainHandler implements ImplHandler {
 
     private void remove(Socket socket, Request request, Response response) throws IOException {
         String username = checkPermission(request, response, UserPermission.BOTH);
-        if (username != null) {
+        if (username == null) {
             return;
         }
 
@@ -204,7 +204,7 @@ public class MainHandler implements ImplHandler {
 
     private void copy(Socket socket, Request request, Response response) throws IOException {
         String username = checkPermission(request, response, UserPermission.BOTH);
-        if (username != null) {
+        if (username == null) {
             return;
         }
 
@@ -240,7 +240,7 @@ public class MainHandler implements ImplHandler {
 
     private void move(Socket socket, Request request, Response response) throws IOException {
         String username = checkPermission(request, response, UserPermission.BOTH);
-        if (username != null) {
+        if (username == null) {
             return;
         }
 
@@ -277,7 +277,7 @@ public class MainHandler implements ImplHandler {
 
     private void makeDirectory(Socket socket, Request request, Response response) throws IOException {
         String username = checkPermission(request, response, UserPermission.BOTH);
-        if (username != null) {
+        if (username == null) {
             return;
         }
 
@@ -311,7 +311,7 @@ public class MainHandler implements ImplHandler {
 
     private void upload(Socket socket, Request request, Response response) throws IOException {
         String username = checkPermission(request, response, UserPermission.BOTH);
-        if (username != null) {
+        if (username == null) {
             return;
         }
 
@@ -381,7 +381,7 @@ public class MainHandler implements ImplHandler {
 
     private void download(Socket socket, Request request, Response response) throws IOException {
         String username = checkPermission(request, response, UserPermission.READ);
-        if (username != null) {
+        if (username == null) {
             return;
         }
 
