@@ -1,5 +1,7 @@
 package pers.kaoru.rfs.core.web;
 
+import pers.kaoru.rfs.core.Error;
+
 import java.util.TreeMap;
 
 public class Response {
@@ -22,6 +24,10 @@ public class Response {
 
     public void setHeader(String key, String value) {
         headers.put(key, value);
+    }
+
+    public void setError(Error error){
+        setHeader("error", error.name());
     }
 
     public String getHeader(String key) {

@@ -1,6 +1,7 @@
 package pers.kaoru.rfs.core.web;
 
 import org.apache.logging.log4j.core.Logger;
+import pers.kaoru.rfs.core.Error;
 import pers.kaoru.rfs.core.FileInfo;
 import pers.kaoru.rfs.core.FileOperator;
 import pers.kaoru.rfs.core.ImplFileOperator;
@@ -8,6 +9,8 @@ import pers.kaoru.rfs.core.ImplFileOperator;
 import java.io.*;
 import java.net.Socket;
 import java.util.LinkedList;
+
+import static pers.kaoru.rfs.core.Error.*;
 
 public class MainHandler implements ImplHandler {
 
@@ -82,7 +85,7 @@ public class MainHandler implements ImplHandler {
 
     private boolean checkPath(String path) {
         if (path.contains("..")) {
-            log.warn("illegal path");
+            log.warn(ILLEGAL_PATH + ": " + path);
             return false;
         }
         return true;
@@ -92,31 +95,32 @@ public class MainHandler implements ImplHandler {
         String token = request.getHeader("token");
         if (token == null) {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "Request a token");
-            log.warn("no token");
+            response.setError(NO_TOKEN);
+            log.warn(NO_TOKEN);
             return null;
         }
 
         var result = WebUtils.VerifyToken(token);
         if (result == null) {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "Invalid token");
-            log.warn("invalid token");
+            response.setError(INVALID_TOKEN);
+            log.warn(INVALID_TOKEN);
             return null;
         }
 
-        UserInfo info = userManger.getUser(result.get("username"));
+        String name = result.get("username");
+        UserInfo info = userManger.getUser(name);
         if (info == null) {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "No user");
-            log.warn("no user");
+            response.setError(Error.NO_USER);
+            log.warn(Error.NO_USER + ": " + name);
             return null;
         }
 
         if (!UserManger.VerifyPermission(info, permission)) {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "Permission denied");
-            log.warn("permission denied [" + info.getName() + "]");
+            response.setError(PERMISSION_DENIED);
+            log.warn(PERMISSION_DENIED + " [" + name + "]");
             return null;
         }
 
@@ -132,8 +136,8 @@ public class MainHandler implements ImplHandler {
         String source = request.getHeader("source");
         if (source == null) {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "Illegal parameter");
-            log.warn("illegal parameter");
+            response.setError(ILLEGAL_PARAMETER);
+            log.warn(ILLEGAL_PARAMETER);
             return;
         }
 
@@ -154,8 +158,8 @@ public class MainHandler implements ImplHandler {
             log.info("list show [" + username + "] " + source);
         } else {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "Illegal path");
-            log.warn("illegal path");
+            response.setError(ILLEGAL_PATH);
+            log.warn(ILLEGAL_PATH);
         }
     }
 
@@ -168,8 +172,8 @@ public class MainHandler implements ImplHandler {
         String source = request.getHeader("source");
         if (source == null) {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "Illegal parameter");
-            log.warn("illegal parameter");
+            response.setError(ILLEGAL_PARAMETER);
+            log.warn(ILLEGAL_PARAMETER);
             return;
         }
 
@@ -181,8 +185,8 @@ public class MainHandler implements ImplHandler {
         File srcFile = new File(prefixPath + source);
         if (root.equals(srcFile)) {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "Illegal parameter");
-            log.warn("illegal parameter");
+            response.setError(ILLEGAL_PARAMETER);
+            log.warn(ILLEGAL_PARAMETER);
             return;
         }
 
@@ -192,13 +196,13 @@ public class MainHandler implements ImplHandler {
                 log.info("remove [" + username + "] " + source);
             } else {
                 response.setCode(ResponseCode.FAIL);
-                response.setHeader("error", "Remove operate fail");
-                log.warn("remove operate file: " + source);
+                response.setError(REMOVE_OPERATE_FAIL);
+                log.warn(REMOVE_OPERATE_FAIL + ": " + source);
             }
         } else {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "File does not exist");
-            log.warn("file does not exist: " + source);
+            response.setError(FILE_NOT_FOUND);
+            log.warn(FILE_NOT_FOUND + ": " + source);
         }
     }
 
@@ -212,8 +216,8 @@ public class MainHandler implements ImplHandler {
         String destination = request.getHeader("destination");
         if (source == null || destination == null) {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "Illegal parameter");
-            log.warn("illegal parameter");
+            response.setError(ILLEGAL_PARAMETER);
+            log.warn(ILLEGAL_PARAMETER);
             return;
         }
 
@@ -229,12 +233,12 @@ public class MainHandler implements ImplHandler {
                 log.info("copy [" + username + "] " + source + " -> " + destination);
             } else {
                 response.setCode(ResponseCode.FAIL);
-                response.setHeader("error", "Copy operate fail");
+                response.setError(COPY_OPERATE_FAIL);
             }
         } else {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "Illegal path");
-            log.warn("illegal path: " + source + " -> " + destination);
+            response.setError(ILLEGAL_PATH);
+            log.warn(ILLEGAL_PATH + ": " + source + " -> " + destination);
         }
     }
 
@@ -248,8 +252,8 @@ public class MainHandler implements ImplHandler {
         String destination = request.getHeader("destination");
         if (source == null || destination == null) {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "Illegal parameter");
-            log.warn("illegal parameter");
+            response.setError(ILLEGAL_PARAMETER);
+            log.warn(ILLEGAL_PARAMETER);
             return;
         }
 
@@ -265,13 +269,13 @@ public class MainHandler implements ImplHandler {
                 log.info("move [" + username + "] " + source + " -> " + destination);
             } else {
                 response.setCode(ResponseCode.FAIL);
-                response.setHeader("error", "Move operate fail");
-                log.warn("move operate fail: " + source + " -> " + destination);
+                response.setError(MOVE_OPERATE_FAIL);
+                log.warn(MOVE_OPERATE_FAIL + ": " + source + " -> " + destination);
             }
         } else {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "Illegal path");
-            log.warn("illegal path: " + source + " -> " + destination);
+            response.setError(ILLEGAL_PATH);
+            log.warn(ILLEGAL_PATH + ": " + source + " -> " + destination);
         }
     }
 
@@ -284,8 +288,8 @@ public class MainHandler implements ImplHandler {
         String source = request.getHeader("source");
         if (source == null) {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "Illegal parameter");
-            log.warn("illegal parameter");
+            response.setError(ILLEGAL_PARAMETER);
+            log.warn(ILLEGAL_PARAMETER);
             return;
         }
 
@@ -299,13 +303,13 @@ public class MainHandler implements ImplHandler {
                 response.setCode(ResponseCode.OK);
             } else {
                 response.setCode(ResponseCode.FAIL);
-                response.setHeader("error", "Make directory operate fail");
-                log.warn("make directory operate fail: " + source);
+                response.setError(MAKE_DIR_OPERATE_FAIL);
+                log.warn(MAKE_DIR_OPERATE_FAIL + ": " + source);
             }
         } else {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "File already exist");
-            log.warn("file already exist: " + source);
+            response.setError(FILE_ALREADY_EXIST);
+            log.warn(FILE_ALREADY_EXIST + ": " + source);
         }
     }
 
@@ -319,8 +323,8 @@ public class MainHandler implements ImplHandler {
         String rangeStr = request.getHeader("range");
         if (source == null || rangeStr == null) {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "Illegal parameter");
-            log.warn("illegal parameter");
+            response.setError(ILLEGAL_PARAMETER);
+            log.warn(ILLEGAL_PARAMETER);
             return;
         }
 
@@ -332,15 +336,15 @@ public class MainHandler implements ImplHandler {
         if (srcFile.exists()) {
             if (srcFile.isDirectory()) {
                 response.setCode(ResponseCode.FAIL);
-                response.setHeader("error", "Illegal path");
-                log.warn("illegal path");
+                response.setError(ILLEGAL_PATH);
+                log.warn(ILLEGAL_PATH + ": " + source);
                 return;
             }
         } else {
             if (!srcFile.createNewFile()) {
                 response.setCode(ResponseCode.FAIL);
-                response.setHeader("error", "Create file fail");
-                log.warn("create file fail: " + source);
+                response.setError(CREATE_FILE_FAIL);
+                log.warn(CREATE_FILE_FAIL + ": " + source);
                 return;
             }
         }
@@ -348,8 +352,8 @@ public class MainHandler implements ImplHandler {
         Range range = Range.RangeBuild(rangeStr);
         if (range.getBegin() > srcFile.length()) {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "Illegal seek location");
-            log.warn("illegal seek location: " + range.getBegin());
+            response.setError(ILLEGAL_SEEK_LOCATION);
+            log.warn(ILLEGAL_SEEK_LOCATION + ": " + range.getBegin());
             return;
         }
 
@@ -390,8 +394,8 @@ public class MainHandler implements ImplHandler {
 
         if (source == null || rangeStr == null) {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "Illegal parameter");
-            log.warn("illegal parameter");
+            response.setError(ILLEGAL_PARAMETER);
+            log.warn(ILLEGAL_PARAMETER);
             return;
         }
 
@@ -402,16 +406,16 @@ public class MainHandler implements ImplHandler {
         File srcFile = new File(prefixPath + source);
         if (!srcFile.exists()) {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "Illegal path");
-            log.warn("illegal path");
+            response.setError(ILLEGAL_PATH);
+            log.warn(ILLEGAL_PATH + ": " + source);
             return;
         }
 
         Range range = Range.RangeBuild(rangeStr);
         if (range.getBegin() > srcFile.length()) {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "Illegal seek location");
-            log.warn("illegal seek location: " + range.getBegin());
+            response.setError(ILLEGAL_SEEK_LOCATION);
+            log.warn(ILLEGAL_SEEK_LOCATION + ": " + range.getBegin());
             return;
         }
 
@@ -445,23 +449,23 @@ public class MainHandler implements ImplHandler {
         String pwd = request.getHeader("password");
         if (name == null || pwd == null) {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "Illegal parameter");
-            log.warn("illegal parameter");
+            response.setError(ILLEGAL_PARAMETER);
+            log.warn(ILLEGAL_PARAMETER);
             return;
         }
 
         UserInfo info = userManger.getUser(name);
         if (info == null) {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "No user [" + name + "]");
-            log.warn("no user");
+            response.setError(NO_USER);
+            log.warn(NO_USER + " [" + name + "]");
             return;
         }
 
         if (!info.getPassword().equals(pwd)) {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "wrong password");
-            log.warn("wrong password [" + name + "]");
+            response.setError(WRONG_PASSWORD);
+            log.warn(WRONG_PASSWORD +  " [" + name + "]");
             return;
         }
 

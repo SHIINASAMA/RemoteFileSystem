@@ -59,6 +59,7 @@ public class FileInfo implements Serializable {
             String[] subElements = element.split(", ");
 
             String name = subElements[0].split("=")[1];
+            name = name.substring(1, name.length() - 1);
             Boolean isDirectory = Boolean.parseBoolean(subElements[1].split("=")[1]);
             Long size = Long.parseLong(subElements[2].split("=")[1]);
             Long last = Long.parseLong(subElements[3].split("=")[1]);
