@@ -16,10 +16,18 @@ public class MainHandler implements ImplHandler {
     private final UserManger userManger;
     private final Logger log;
 
-    public MainHandler(String prefixPath, Logger logger) {
+    public static MainHandler HandlerBuild(String prefixPath, LinkedList<UserInfo> users, Logger logger) {
+        UserManger userManger = new UserManger();
+        for (var user : users) {
+            userManger.addUser(user);
+        }
+        return new MainHandler(prefixPath, userManger, logger);
+    }
+
+    private MainHandler(String prefixPath, UserManger userManger, Logger logger) {
         this.prefixPath = prefixPath;
         operator = new FileOperator();
-        userManger = new UserManger();
+        this.userManger = userManger;
         log = logger;
     }
 
@@ -57,7 +65,7 @@ public class MainHandler implements ImplHandler {
                     break;
             }
             WebUtils.WriteResponse(socket, response);
-        } catch (IOException exception) {
+        } catch (Exception exception) {
             exception.printStackTrace();
             log.warn(exception.getMessage());
         } finally {
@@ -65,7 +73,7 @@ public class MainHandler implements ImplHandler {
                 socket.shutdownInput();
                 socket.shutdownOutput();
                 socket.close();
-            } catch (IOException exception) {
+            } catch (Exception exception) {
                 exception.printStackTrace();
                 log.warn(exception.getMessage());
             }
@@ -445,7 +453,7 @@ public class MainHandler implements ImplHandler {
         UserInfo info = userManger.getUser(name);
         if (info == null) {
             response.setCode(ResponseCode.FAIL);
-            response.setHeader("error", "No user");
+            response.setHeader("error", "No user [" + name + "]");
             log.warn("no user");
             return;
         }
@@ -454,6 +462,7 @@ public class MainHandler implements ImplHandler {
             response.setCode(ResponseCode.FAIL);
             response.setHeader("error", "wrong password");
             log.warn("wrong password [" + name + "]");
+            return;
         }
 
         String token = WebUtils.MakeToken(name, pwd);

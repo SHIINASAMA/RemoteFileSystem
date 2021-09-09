@@ -5,6 +5,7 @@ import pers.kaoru.rfs.core.web.ImplHandler;
 import pers.kaoru.rfs.core.web.MainHandler;
 import pers.kaoru.rfs.ImplExecutable;
 import pers.kaoru.rfs.Main;
+import pers.kaoru.rfs.server.Config;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -20,13 +21,13 @@ public class Console implements ImplExecutable {
     private final ExecutorService executorService;
     private final Logger log;
 
-    public Console(String host, int port, int backlog, String wordDirectory, int threads) throws IOException {
+    public Console(Config config) throws IOException {
         log = Main.log;
         log.info("service starting");
-        serverSocket = new ServerSocket(port, backlog, InetAddress.getByName(host));
-        executorService = Executors.newFixedThreadPool(threads);
-        handler = new MainHandler(wordDirectory, log);
-        log.info("service start on " + host + ":" + port);
+        serverSocket = new ServerSocket(config.getPort(), config.getBacklog(), InetAddress.getByName(config.getHost()));
+        executorService = Executors.newFixedThreadPool(config.getThreads());
+        handler = MainHandler.HandlerBuild(config.getWorkDirectory(), config.getUsers(), log);
+        log.info("service start on " + config.getHost() + ":" + config.getPort());
     }
 
     @Override

@@ -4,7 +4,11 @@ import java.util.TreeMap;
 
 public class UserManger {
 
-    private TreeMap<String ,UserInfo> users;
+    private final TreeMap<String ,UserInfo> users;
+
+    public UserManger(){
+        users = new TreeMap<>();
+    }
 
     public void addUser(UserInfo userInfo) {
         users.put(userInfo.getName(), userInfo);

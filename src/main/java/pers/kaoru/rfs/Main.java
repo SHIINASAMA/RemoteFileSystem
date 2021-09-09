@@ -93,7 +93,7 @@ public class Main {
                 System.out.println("################  CONSOLE  ################");
                 try {
                     Config config = Config.ConfigBuild(path);
-                    ImplExecutable console = new Console(config.getHost(), config.getPort(), 10, config.getWorkDirectory(), config.getThreads());
+                    ImplExecutable console = new Console(config);
                     console.exec();
                 } catch (IOException exception) {
                     log.info("fail to start service, " + exception.getMessage());

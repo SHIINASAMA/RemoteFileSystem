@@ -8,7 +8,6 @@ import pers.kaoru.rfs.core.web.UserPermission;
 
 import java.io.*;
 import java.util.LinkedList;
-import java.util.function.Predicate;
 
 public class Config {
 

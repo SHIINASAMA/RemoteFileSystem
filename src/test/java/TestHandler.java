@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Date;
 import java.util.LinkedList;
@@ -30,18 +29,18 @@ public class TestHandler extends Thread {
 
     @Override
     public void run() {
-        try {
-            ServerSocket server = new ServerSocket(8080);
-            ImplHandler handler = new MainHandler("E:/", (Logger) LogManager.getLogger(LogManager.ROOT_LOGGER_NAME));
-            Socket client = server.accept();
-            handler.handle(client);
+//        try {
+//            ServerSocket server = new ServerSocket(8080);
+//            ImplHandler handler = new MainHandler("E:/", (Logger) LogManager.getLogger(LogManager.ROOT_LOGGER_NAME));
+//            Socket client = server.accept();
+//            handler.handle(client);
             // 测试 Download 时需要
 //            client = server.accept();
 //            handler.handle(client);
 
-        } catch (IOException exception) {
-            exception.printStackTrace();
-        }
+//        } catch (IOException exception) {
+//            exception.printStackTrace();
+//        }
     }
 
     private static void testListShow() throws IOException {

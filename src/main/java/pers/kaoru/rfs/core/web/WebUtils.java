@@ -103,7 +103,7 @@ public class WebUtils {
         return response;
     }
 
-    private static final long TokenExpireDate = 60 * 60 * 1000;
+    private static final long TokenExpireDate = 3 * 60 * 60 * 1000;
     private static final String TokenSecret = "pers.kaoru.rfs.core.web.WebUtils";
 
     public static String MakeToken(String name, String password) {
