@@ -7,6 +7,8 @@ import pers.kaoru.rfs.server.Config;
 import pers.kaoru.rfs.server.console.Console;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Properties;
 
 public class Main {
@@ -71,14 +73,18 @@ public class Main {
 
         switch (mode) {
             case ARGS_LAUNCH_MODE_TEST: {
+                System.out.println("################ Test Mode ################");
                 Config config;
                 try {
                     config = Config.ConfigBuild(path);
+                    File workdir = new File(config.getWorkDirectory());
+                    if(!workdir.exists() || !workdir.isDirectory()){
+                        throw new FileNotFoundException("no directory named \"" +  config.getWorkDirectory() + "\"");
+                    }
                 } catch (IOException exception) {
                     log.error(exception.getMessage());
                     return;
                 }
-                System.out.println("################ Test Mode ################");
                 System.out.println("host:           " + config.getHost());
                 System.out.println("port:           " + config.getPort());
                 System.out.println("backlog:        " + config.getBacklog());
@@ -93,6 +99,10 @@ public class Main {
                 System.out.println("################  CONSOLE  ################");
                 try {
                     Config config = Config.ConfigBuild(path);
+                    File workdir = new File(config.getWorkDirectory());
+                    if(!workdir.exists() || !workdir.isDirectory()){
+                        throw new FileNotFoundException("no directory named \"" +  config.getWorkDirectory() + "\"");
+                    }
                     ImplExecutable console = new Console(config);
                     console.exec();
                 } catch (IOException exception) {

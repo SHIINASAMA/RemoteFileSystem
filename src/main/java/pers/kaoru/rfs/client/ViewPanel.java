@@ -9,11 +9,18 @@ import java.util.Date;
 
 public class ViewPanel extends JPanel {
 
+    public final JTextField pathTextBox = new JTextField();
+    public final JButton backButton = new JButton("back");
     public final JTable table;
     private final DefaultTableModel defaultTableModel;
 
     public ViewPanel() {
-        setLayout(new GridLayout(1, 1));
+        setLayout(new BorderLayout());
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(pathTextBox, BorderLayout.CENTER);
+        topPanel.add(backButton, BorderLayout.EAST);
+        add(topPanel, BorderLayout.NORTH);
 
         String[] columnNames = {"name", "attributes", "size", "last modified"};
         Object[][] data = {};
@@ -28,7 +35,7 @@ public class ViewPanel extends JPanel {
         table.getColumnModel().getColumn(0).setPreferredWidth(300);
 
         JScrollPane scrollPane = new JScrollPane(table);
-        add(scrollPane);
+        add(scrollPane, BorderLayout.CENTER);
     }
 
     public void addRow(FileInfo info) {
@@ -39,7 +46,7 @@ public class ViewPanel extends JPanel {
         defaultTableModel.addRow(new Object[]{name, isDir, size, last.toString()});
     }
 
-    public void clear(){
+    public void clear() {
         defaultTableModel.setRowCount(0);
     }
 }

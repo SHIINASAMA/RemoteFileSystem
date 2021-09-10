@@ -6,6 +6,10 @@ import pers.kaoru.rfs.core.web.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.LinkedList;
@@ -14,14 +18,16 @@ import java.util.concurrent.ExecutionException;
 
 public class MainWindow extends JFrame {
 
-    private final CardLayout layout;
-    private final LoginPanel loginPanel;
-    private final ViewPanel viewPanel;
+    private final CardLayout layout = new CardLayout();
+
+    private final LoginPanel loginPanel = new LoginPanel();
+    private final ViewPanel viewPanel = new ViewPanel();
     private String token = "";
 
     private String host = "";
     private int port = 0;
     private Boolean flushState = false;
+    private final Router router = new Router();
 
     public MainWindow() {
         String iconPath = Objects.requireNonNull(getClass().getResource("/icon.png")).getPath();
@@ -30,16 +36,10 @@ public class MainWindow extends JFrame {
         setSize(600, 400);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-
-        layout = new CardLayout();
         setLayout(layout);
 
-        loginPanel = new LoginPanel();
-        loginPanel.loginButton.addActionListener(func -> login());
-        add(loginPanel, "login");
-
-        viewPanel = new ViewPanel();
-        add(viewPanel, "view");
+        initLoginPanel();
+        initViewPanel();
 
         setVisible(true);
 
@@ -47,6 +47,68 @@ public class MainWindow extends JFrame {
         loginPanel.portTextBox.setText("8080");
         loginPanel.nameTextBox.setText("root");
         loginPanel.pwdTextBox.setText("123");
+    }
+
+    private void initLoginPanel() {
+        loginPanel.loginButton.addActionListener(func -> login());
+        add(loginPanel, "login");
+    }
+
+    private void initViewPanel() {
+        viewPanel.backButton.addActionListener(func -> back());
+
+        viewPanel.pathTextBox.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                if (e.getKeyChar() == '\n') {
+                    flush(viewPanel.pathTextBox.getText(), true);
+                }
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+
+            }
+        });
+        viewPanel.table.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() >= 2) {
+                    int row = viewPanel.table.getSelectedRow();
+                    String type = (String) viewPanel.table.getValueAt(row, 1);
+                    if (type.equals("Dir")) {
+                        String name = (String) viewPanel.table.getValueAt(row, 0);
+                        flush(name, false);
+                    }
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
+        add(viewPanel, "view");
     }
 
     private void login() {
@@ -67,7 +129,7 @@ public class MainWindow extends JFrame {
                 }
                 if (token != null) {
                     layout.show(getContentPane(), "view");
-                    flush();
+                    flush(router.toString(), true);
                 }
             }
 
@@ -119,10 +181,22 @@ public class MainWindow extends JFrame {
         }.execute();
     }
 
-    private void flush() {
+    private void back() {
+        router.back();
+        flush(router.toString(), true);
+    }
+
+    /// 返回也属于 Jump
+    private void flush(String path, Boolean isJump) {
         assert !token.isEmpty();
 
+        if (flushState) {
+            return;
+        }
+        flushState = true;
+
         var table = viewPanel.table;
+        var pathTextBox = viewPanel.pathTextBox;
 
         new SwingWorker<LinkedList<FileInfo>, Void>() {
             @Override
@@ -135,11 +209,16 @@ public class MainWindow extends JFrame {
                     e.printStackTrace();
                 }
                 if (list != null) {
-                    for(var item : list){
+                    viewPanel.clear();
+                    if (isJump) {
+                        router.reset(path);
+                    } else {
+                        router.enter(path);
+                    }
+                    pathTextBox.setText(router.toString());
+                    for (var item : list) {
                         viewPanel.addRow(item);
                     }
-                }else{
-                    JOptionPane.showMessageDialog(getContentPane(), "request fail");
                 }
             }
 
@@ -148,7 +227,11 @@ public class MainWindow extends JFrame {
                 Request request = new Request();
                 request.setMethod(RequestMethod.LIST_SHOW);
                 request.setHeader("token", token);
-                request.setHeader("source", "/");
+                if (isJump) {
+                    request.setHeader("source", path);
+                } else {
+                    request.setHeader("source", router.toString() + path);
+                }
 
                 Response response;
                 try {
