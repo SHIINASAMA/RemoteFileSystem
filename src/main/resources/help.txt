@@ -13,8 +13,7 @@ Usage: java -jar RemoteFileSystem.jar [OPTION] ...
 
   --launch-mode     program's launch mode
     test            test the configuration file
-    console         launch server on console
-    server          launch server GUI with swing
+    server          launch server on console
     client          launch client GUI with swing
 
   --config-path     configuration file path, console and server mode need this argument

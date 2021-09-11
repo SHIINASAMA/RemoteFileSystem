@@ -1,7 +1,6 @@
 package pers.kaoru.rfs.client;
 
 import pers.kaoru.rfs.core.FileInfo;
-import pers.kaoru.rfs.core.MD5Utils;
 import pers.kaoru.rfs.core.web.*;
 
 import javax.swing.*;
@@ -11,9 +10,6 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.IOException;
-import java.net.Socket;
-import java.security.spec.RSAOtherPrimeInfo;
-import java.util.LinkedList;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
@@ -34,7 +30,7 @@ public class MainWindow extends JFrame {
         String iconPath = Objects.requireNonNull(getClass().getResource("/icon.png")).getPath();
         setIconImage(new ImageIcon(iconPath).getImage());
         setTitle("RFS Client");
-        setSize(600, 400);
+        setSize(800, 600);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(layout);
@@ -44,6 +40,7 @@ public class MainWindow extends JFrame {
 
         setVisible(true);
 
+        /// 测试用参数
         loginPanel.hostTextBox.setText("localhost");
         loginPanel.portTextBox.setText("8080");
         loginPanel.nameTextBox.setText("root");
@@ -84,7 +81,7 @@ public class MainWindow extends JFrame {
                     String type = (String) viewPanel.table.getValueAt(row, 1);
                     if (type.equals("Dir")) {
                         String name = (String) viewPanel.table.getValueAt(row, 0);
-                        flush(false, name);
+                        onward(name);
                     }
                 }
             }
@@ -109,6 +106,11 @@ public class MainWindow extends JFrame {
 
             }
         });
+
+        viewPanel.flushButton.addActionListener(func -> onward("/"));
+        viewPanel.mkdirButton.addActionListener(func -> newDir());
+        viewPanel.removeButton.addActionListener(func -> remove());
+
         add(viewPanel, "view");
     }
 
@@ -186,8 +188,6 @@ public class MainWindow extends JFrame {
     }
 
     private void jump(String path) {
-        assert !token.isEmpty();
-
         if (flushState) {
             return;
         }
@@ -209,31 +209,26 @@ public class MainWindow extends JFrame {
                     viewPanel.backButton.setEnabled(true);
                     viewPanel.table.setFocusable(true);
                     flushState = false;
+                    JOptionPane.showMessageDialog(getContentPane(), e.getMessage());
+                    return;
                 }
 
-                if (response != null) {
-                    if (response.getCode() == ResponseCode.OK) {
-                        viewPanel.clear();
-                        var list = FileInfo.FileInfosBuild(response.getHeader("list"));
-                        for (var item : list) {
-                            viewPanel.addRow(item);
-                        }
-
-                        router.reset(path);
-                        viewPanel.pathTextBox.setText(router.toString());
-
-                    } else {
-                        JOptionPane.showMessageDialog(getContentPane(), response.getHeader("error"));
+                if (response.getCode() == ResponseCode.OK) {
+                    viewPanel.clear();
+                    var list = FileInfo.FileInfosBuild(response.getHeader("list"));
+                    for (var item : list) {
+                        viewPanel.addRow(item);
                     }
+                    router.reset(path);
+                    viewPanel.pathTextBox.setText(router.toString());
                 } else {
-                    JOptionPane.showMessageDialog(getContentPane(), "no response");
+                    JOptionPane.showMessageDialog(getContentPane(), response.getHeader("error"));
                 }
 
                 viewPanel.pathTextBox.setEnabled(true);
                 viewPanel.backButton.setEnabled(true);
                 viewPanel.table.setFocusable(true);
                 flushState = false;
-
             }
 
             @Override
@@ -241,6 +236,7 @@ public class MainWindow extends JFrame {
                 return ClientUtils.ListShow(host, port, path, token);
             }
         }.execute();
+
     }
 
     /**
@@ -250,8 +246,6 @@ public class MainWindow extends JFrame {
      * @param subName 子目录名称
      */
     private void flush(Boolean isBack, String subName) {
-        assert !token.isEmpty();
-
         if (flushState) {
             return;
         }
@@ -273,28 +267,26 @@ public class MainWindow extends JFrame {
                     viewPanel.backButton.setEnabled(true);
                     viewPanel.table.setFocusable(true);
                     flushState = false;
+                    JOptionPane.showMessageDialog(getContentPane(), e.getMessage());
                     return;
                 }
 
-                if (response != null) {
-                    if (response.getCode() == ResponseCode.OK) {
-                        viewPanel.clear();
-                        var list = FileInfo.FileInfosBuild(response.getHeader("list"));
-                        for (var item : list) {
-                            viewPanel.addRow(item);
-                        }
 
-                        if (isBack) {
-                            router.back();
-                        } else {
-                            router.enter(subName);
-                        }
-                        viewPanel.pathTextBox.setText(router.toString());
-                    } else {
-                        JOptionPane.showMessageDialog(getContentPane(), response.getHeader("error"));
+                if (response.getCode() == ResponseCode.OK) {
+                    viewPanel.clear();
+                    var list = FileInfo.FileInfosBuild(response.getHeader("list"));
+                    for (var item : list) {
+                        viewPanel.addRow(item);
                     }
+
+                    if (isBack) {
+                        router.back();
+                    } else {
+                        router.enter(subName);
+                    }
+                    viewPanel.pathTextBox.setText(router.toString());
                 } else {
-                    JOptionPane.showMessageDialog(getContentPane(), "no response");
+                    JOptionPane.showMessageDialog(getContentPane(), response.getHeader("error"));
                 }
 
                 viewPanel.pathTextBox.setEnabled(true);
@@ -314,7 +306,65 @@ public class MainWindow extends JFrame {
 
                 return ClientUtils.ListShow(host, port, path, token);
             }
-        }.execute();
+        }.
+
+                execute();
 
     }
+
+    private void newDir() {
+        String source = JOptionPane.showInputDialog(getContentPane(), "make a new directory");
+        if(source == null) return;
+        char[] chars = {'\"', '*', '?', '<', '>', '|'};
+        for (char c : chars) {
+            if (source.indexOf(c) != -1) {
+                JOptionPane.showMessageDialog(getContentPane(), "illegal name");
+                return;
+            }
+        }
+
+        source = router + source;
+        Response response = null;
+        try {
+            response = ClientUtils.MakeDirectory(host, port, source, token);
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(getContentPane(), e.getMessage());
+            return;
+        }
+
+        if (response.getCode() == ResponseCode.OK) {
+            flush(false, "/");
+        } else {
+            JOptionPane.showMessageDialog(getContentPane(), response.getHeader("error"));
+        }
+    }
+
+    private void remove() {
+        int index = viewPanel.table.getSelectedRow();
+        if (index == -1) {
+            return;
+        }
+
+        boolean isDir = viewPanel.table.getValueAt(index, 1).equals("Dir");
+        String source = router + (String) viewPanel.table.getValueAt(index, 0);
+        var opt = JOptionPane.showConfirmDialog(getContentPane(), "are you sure remove this " + (isDir ? "directory" : "file"), "remove operate", JOptionPane.YES_NO_OPTION);
+        if (opt == JOptionPane.YES_OPTION) {
+            Response response = null;
+            try {
+                response = ClientUtils.Remove(host, port, source, token);
+            } catch (IOException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(getContentPane(), e.getMessage());
+                return;
+            }
+
+            if (response.getCode() == ResponseCode.OK) {
+                flush(false, "/");
+            } else {
+                JOptionPane.showMessageDialog(getContentPane(), "remove fail");
+            }
+        }
+    }
+
 }

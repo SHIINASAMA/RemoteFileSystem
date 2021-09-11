@@ -41,7 +41,7 @@ public class FileOperator implements ImplFileOperator {
                 }
             }
         }
-        return true;
+        return source.delete();
     }
 
     @Override

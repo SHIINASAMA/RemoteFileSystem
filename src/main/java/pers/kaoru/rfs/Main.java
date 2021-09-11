@@ -7,8 +7,6 @@ import pers.kaoru.rfs.server.Config;
 import pers.kaoru.rfs.server.console.Console;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Properties;
 
 public class Main {
@@ -22,7 +20,6 @@ public class Main {
     private static final String ARGS_LAUNCH_MODE = "--launch-mode";
     private static final String ARGS_LAUNCH_MODE_CLIENT = "client";
     private static final String ARGS_LAUNCH_MODE_TEST = "test";
-    private static final String ARGS_LAUNCH_MODE_CONSOLE = "console";
     private static final String ARGS_LAUNCH_MODE_SERVER = "server";
 
     public static void main(String[] args) {
@@ -85,28 +82,9 @@ public class Main {
                     log.error(exception.getMessage());
                     return;
                 }
-                System.out.println("host:           " + config.getHost());
-                System.out.println("port:           " + config.getPort());
-                System.out.println("backlog:        " + config.getBacklog());
-                System.out.println("word directory: " + config.getWorkDirectory());
-                System.out.println("threads:        " + config.getThreads());
+                printConfig(config);
                 for (var user : config.getUsers()) {
                     System.out.println(user);
-                }
-                break;
-            }
-            case ARGS_LAUNCH_MODE_CONSOLE: {
-                System.out.println("################  CONSOLE  ################");
-                try {
-                    Config config = Config.ConfigBuild(path);
-                    File workdir = new File(config.getWorkDirectory());
-                    if(!workdir.exists() || !workdir.isDirectory()){
-                        throw new FileNotFoundException("no directory named \"" +  config.getWorkDirectory() + "\"");
-                    }
-                    ImplExecutable console = new Console(config);
-                    console.exec();
-                } catch (IOException exception) {
-                    log.info("fail to start service, " + exception.getMessage());
                 }
                 break;
             }
@@ -125,6 +103,18 @@ public class Main {
             }
             case ARGS_LAUNCH_MODE_SERVER:
                 System.out.println("################  SERVER   ################");
+                try {
+                    Config config = Config.ConfigBuild(path);
+                    File workdir = new File(config.getWorkDirectory());
+                    if(!workdir.exists() || !workdir.isDirectory()){
+                        throw new FileNotFoundException("no directory named \"" +  config.getWorkDirectory() + "\"");
+                    }
+                    printConfig(config);
+                    ImplExecutable console = new Console(config);
+                    console.exec();
+                } catch (IOException exception) {
+                    log.info("fail to start service, " + exception.getMessage());
+                }
                 break;
             default:
                 log.warn("unknown mode: " + mode);
@@ -166,5 +156,13 @@ public class Main {
 
         System.out.println("Version " + major + "." + minor + "[." + rev + "]");
         System.out.println(by + " build this package on " + date);
+    }
+
+    private static void printConfig(Config config){
+        System.out.println("host:           " + config.getHost());
+        System.out.println("port:           " + config.getPort());
+        System.out.println("backlog:        " + config.getBacklog());
+        System.out.println("word directory: " + config.getWorkDirectory());
+        System.out.println("threads:        " + config.getThreads());
     }
 }

@@ -52,6 +52,7 @@ public class FileInfo implements Serializable {
 
     public static LinkedList<FileInfo> FileInfosBuild(String string) {
         LinkedList<FileInfo> fileInfos = new LinkedList<>();
+        if (string.length() == 2) return fileInfos;
         string = string.substring(1, string.length() - 2);
         String[] elements = string.split("}, ");
         for (String element : elements) {
