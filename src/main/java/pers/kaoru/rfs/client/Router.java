@@ -23,6 +23,28 @@ public class Router {
         return false;
     }
 
+    public String preback() {
+        if (!stack.isEmpty()) {
+            int count = stack.size(); // 1 - n
+            int pos = 0;
+
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("/");
+            for (String directory : stack) {
+                if (pos == count - 1) {
+                    return stringBuilder.toString();
+                }
+                pos += 1;
+                stringBuilder.append(directory).append('/');
+            }
+        }
+        return null;
+    }
+
+    public boolean isEmpty() {
+        return stack.isEmpty();
+    }
+
     public String current() {
         return stack.lastElement();
     }

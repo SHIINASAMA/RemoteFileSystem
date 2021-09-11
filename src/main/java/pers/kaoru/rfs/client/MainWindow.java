@@ -12,6 +12,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.net.Socket;
+import java.security.spec.RSAOtherPrimeInfo;
 import java.util.LinkedList;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -61,7 +62,7 @@ public class MainWindow extends JFrame {
             @Override
             public void keyTyped(KeyEvent e) {
                 if (e.getKeyChar() == '\n') {
-                    flush(viewPanel.pathTextBox.getText(), true);
+                    jump(viewPanel.pathTextBox.getText());
                 }
             }
 
@@ -83,7 +84,7 @@ public class MainWindow extends JFrame {
                     String type = (String) viewPanel.table.getValueAt(row, 1);
                     if (type.equals("Dir")) {
                         String name = (String) viewPanel.table.getValueAt(row, 0);
-                        flush(name, false);
+                        flush(false, name);
                     }
                 }
             }
@@ -129,7 +130,7 @@ public class MainWindow extends JFrame {
                 }
                 if (token != null) {
                     layout.show(getContentPane(), "view");
-                    flush(router.toString(), true);
+                    jump("/");
                 }
             }
 
@@ -151,19 +152,12 @@ public class MainWindow extends JFrame {
                     }
                 }
                 port = Integer.parseInt(portStr);
-                var pwdMd5 = MD5Utils.GenerateMD5(new String(pwd));
 
-                Request request = new Request();
-                request.setMethod(RequestMethod.VERIFY);
-                request.setHeader("username", name);
-                request.setHeader("password", pwdMd5);
 
                 String token;
                 Response response;
                 try {
-                    Socket socket = new Socket(host, port);
-                    WebUtils.WriteRequest(socket, request);
-                    response = WebUtils.ReadResponse(socket);
+                    response = ClientUtils.Verify(host, port, name, new String(pwd));
                 } catch (IOException exception) {
                     exception.printStackTrace();
                     JOptionPane.showMessageDialog(getContentPane(), exception.getMessage());
@@ -182,12 +176,16 @@ public class MainWindow extends JFrame {
     }
 
     private void back() {
-        router.back();
-        flush(router.toString(), true);
+        if (!router.isEmpty()) {
+            flush(true, null);
+        }
     }
 
-    /// 返回也属于 Jump
-    private void flush(String path, Boolean isJump) {
+    private void onward(String subName) {
+        flush(false, subName);
+    }
+
+    private void jump(String path) {
         assert !token.isEmpty();
 
         if (flushState) {
@@ -195,62 +193,126 @@ public class MainWindow extends JFrame {
         }
         flushState = true;
 
-        var table = viewPanel.table;
-        var pathTextBox = viewPanel.pathTextBox;
+        viewPanel.pathTextBox.setEnabled(false);
+        viewPanel.backButton.setEnabled(false);
+        viewPanel.table.setFocusable(false);
 
-        new SwingWorker<LinkedList<FileInfo>, Void>() {
+        new SwingWorker<Response, Void>() {
             @Override
             protected void done() {
-                flushState = false;
-                LinkedList<FileInfo> list = null;
+                Response response = null;
                 try {
-                    list = get();
+                    response = get();
                 } catch (InterruptedException | ExecutionException e) {
                     e.printStackTrace();
+                    viewPanel.pathTextBox.setEnabled(true);
+                    viewPanel.backButton.setEnabled(true);
+                    viewPanel.table.setFocusable(true);
+                    flushState = false;
                 }
-                if (list != null) {
-                    viewPanel.clear();
-                    if (isJump) {
+
+                if (response != null) {
+                    if (response.getCode() == ResponseCode.OK) {
+                        viewPanel.clear();
+                        var list = FileInfo.FileInfosBuild(response.getHeader("list"));
+                        for (var item : list) {
+                            viewPanel.addRow(item);
+                        }
+
                         router.reset(path);
+                        viewPanel.pathTextBox.setText(router.toString());
+
                     } else {
-                        router.enter(path);
+                        JOptionPane.showMessageDialog(getContentPane(), response.getHeader("error"));
                     }
-                    pathTextBox.setText(router.toString());
-                    for (var item : list) {
-                        viewPanel.addRow(item);
-                    }
+                } else {
+                    JOptionPane.showMessageDialog(getContentPane(), "no response");
                 }
+
+                viewPanel.pathTextBox.setEnabled(true);
+                viewPanel.backButton.setEnabled(true);
+                viewPanel.table.setFocusable(true);
+                flushState = false;
+
             }
 
             @Override
-            protected LinkedList<FileInfo> doInBackground() throws Exception {
-                Request request = new Request();
-                request.setMethod(RequestMethod.LIST_SHOW);
-                request.setHeader("token", token);
-                if (isJump) {
-                    request.setHeader("source", path);
-                } else {
-                    request.setHeader("source", router.toString() + path);
-                }
+            protected Response doInBackground() throws Exception {
+                return ClientUtils.ListShow(host, port, path, token);
+            }
+        }.execute();
+    }
 
-                Response response;
+    /**
+     * 刷新 JTable
+     *
+     * @param isBack  为 true 时 path 参数可为 null
+     * @param subName 子目录名称
+     */
+    private void flush(Boolean isBack, String subName) {
+        assert !token.isEmpty();
+
+        if (flushState) {
+            return;
+        }
+        flushState = true;
+
+        viewPanel.pathTextBox.setEnabled(false);
+        viewPanel.backButton.setEnabled(false);
+        viewPanel.table.setFocusable(false);
+
+        new SwingWorker<Response, Void>() {
+            @Override
+            protected void done() {
+                Response response = null;
                 try {
-                    Socket socket = new Socket(host, port);
-                    WebUtils.WriteRequest(socket, request);
-                    response = WebUtils.ReadResponse(socket);
-                } catch (IOException exception) {
-                    exception.printStackTrace();
-                    JOptionPane.showMessageDialog(getContentPane(), exception.getMessage());
-                    return null;
+                    response = get();
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                    viewPanel.pathTextBox.setEnabled(true);
+                    viewPanel.backButton.setEnabled(true);
+                    viewPanel.table.setFocusable(true);
+                    flushState = false;
+                    return;
                 }
 
-                if (response.getCode() == ResponseCode.OK) {
-                    String list = response.getHeader("list");
-                    return FileInfo.FileInfosBuild(list);
+                if (response != null) {
+                    if (response.getCode() == ResponseCode.OK) {
+                        viewPanel.clear();
+                        var list = FileInfo.FileInfosBuild(response.getHeader("list"));
+                        for (var item : list) {
+                            viewPanel.addRow(item);
+                        }
+
+                        if (isBack) {
+                            router.back();
+                        } else {
+                            router.enter(subName);
+                        }
+                        viewPanel.pathTextBox.setText(router.toString());
+                    } else {
+                        JOptionPane.showMessageDialog(getContentPane(), response.getHeader("error"));
+                    }
                 } else {
-                    JOptionPane.showMessageDialog(getContentPane(), response.getHeader("error"));
-                    return null;
+                    JOptionPane.showMessageDialog(getContentPane(), "no response");
                 }
+
+                viewPanel.pathTextBox.setEnabled(true);
+                viewPanel.backButton.setEnabled(true);
+                viewPanel.table.setFocusable(true);
+                flushState = false;
+            }
+
+            @Override
+            protected Response doInBackground() throws IOException {
+                String path;
+                if (isBack) {
+                    path = router.preback();
+                } else {
+                    path = router.toString() + subName;
+                }
+
+                return ClientUtils.ListShow(host, port, path, token);
             }
         }.execute();
 

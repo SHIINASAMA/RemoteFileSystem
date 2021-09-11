@@ -33,6 +33,7 @@ public class ViewPanel extends JPanel {
             }
         };
         table.getColumnModel().getColumn(0).setPreferredWidth(300);
+        table.setRowHeight(26);
 
         JScrollPane scrollPane = new JScrollPane(table);
         add(scrollPane, BorderLayout.CENTER);

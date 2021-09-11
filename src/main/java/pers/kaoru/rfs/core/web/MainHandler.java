@@ -159,7 +159,7 @@ public class MainHandler implements ImplHandler {
         } else {
             response.setCode(ResponseCode.FAIL);
             response.setError(ILLEGAL_PATH);
-            log.warn(ILLEGAL_PATH);
+            log.warn(ILLEGAL_PATH + ": " + source);
         }
     }
 
