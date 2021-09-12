@@ -1,4 +1,4 @@
-package pers.kaoru.rfs.client;
+package pers.kaoru.rfs.client.ui;
 
 import javax.swing.*;
 import java.awt.*;

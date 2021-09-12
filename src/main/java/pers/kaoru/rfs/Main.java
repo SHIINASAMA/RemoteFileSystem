@@ -123,7 +123,7 @@ public class Main {
     }
 
     private static void help() {
-        InputStream inputStream = Main.class.getResourceAsStream("/help.txt");
+        InputStream inputStream = Main.class.getResourceAsStream("/res/help.txt");
         assert inputStream != null;
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         int length;
@@ -139,7 +139,7 @@ public class Main {
     }
 
     private static void version() {
-        InputStream inputStream = Main.class.getResourceAsStream("/config.properties");
+        InputStream inputStream = Main.class.getResourceAsStream("/res/config.properties");
         assert inputStream != null;
         Properties properties = new Properties();
         try {

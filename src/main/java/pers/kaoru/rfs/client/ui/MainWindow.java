@@ -1,7 +1,10 @@
-package pers.kaoru.rfs.client;
+package pers.kaoru.rfs.client.ui;
 
+import pers.kaoru.rfs.client.ClientUtils;
+import pers.kaoru.rfs.client.Router;
 import pers.kaoru.rfs.core.FileInfo;
-import pers.kaoru.rfs.core.web.*;
+import pers.kaoru.rfs.core.web.Response;
+import pers.kaoru.rfs.core.web.ResponseCode;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,7 +30,7 @@ public class MainWindow extends JFrame {
     private final Router router = new Router();
 
     public MainWindow() {
-        String iconPath = Objects.requireNonNull(getClass().getResource("/icon.png")).getPath();
+        String iconPath = Objects.requireNonNull(getClass().getResource("/res/icon.png")).getPath();
         setIconImage(new ImageIcon(iconPath).getImage());
         setTitle("RFS Client");
         setSize(800, 600);
@@ -53,7 +56,6 @@ public class MainWindow extends JFrame {
     }
 
     private void initViewPanel() {
-        viewPanel.backButton.addActionListener(func -> back());
 
         viewPanel.pathTextBox.addKeyListener(new KeyListener() {
             @Override
@@ -73,14 +75,15 @@ public class MainWindow extends JFrame {
 
             }
         });
-        viewPanel.table.addMouseListener(new MouseListener() {
+        viewPanel.backButton.addActionListener(func -> back());
+        viewPanel.table.addTableMouseEvent(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() >= 2) {
-                    int row = viewPanel.table.getSelectedRow();
-                    String type = (String) viewPanel.table.getValueAt(row, 1);
-                    if (type.equals("Dir")) {
-                        String name = (String) viewPanel.table.getValueAt(row, 0);
+                    int row = viewPanel.table.getSelectedIndex();
+                    var file = viewPanel.table.getRow(row);
+                    if (file.isDirectory()) {
+                        String name = file.getName();
                         onward(name);
                     }
                 }
@@ -214,10 +217,10 @@ public class MainWindow extends JFrame {
                 }
 
                 if (response.getCode() == ResponseCode.OK) {
-                    viewPanel.clear();
+                    viewPanel.table.clear();
                     var list = FileInfo.FileInfosBuild(response.getHeader("list"));
                     for (var item : list) {
-                        viewPanel.addRow(item);
+                        viewPanel.table.addRow(item);
                     }
                     router.reset(path);
                     viewPanel.pathTextBox.setText(router.toString());
@@ -273,10 +276,10 @@ public class MainWindow extends JFrame {
 
 
                 if (response.getCode() == ResponseCode.OK) {
-                    viewPanel.clear();
+                    viewPanel.table.clear();
                     var list = FileInfo.FileInfosBuild(response.getHeader("list"));
                     for (var item : list) {
-                        viewPanel.addRow(item);
+                        viewPanel.table.addRow(item);
                     }
 
                     if (isBack) {
@@ -341,14 +344,14 @@ public class MainWindow extends JFrame {
     }
 
     private void remove() {
-        int index = viewPanel.table.getSelectedRow();
+        int index = viewPanel.table.getSelectedIndex();
         if (index == -1) {
             return;
         }
 
-        boolean isDir = viewPanel.table.getValueAt(index, 1).equals("Dir");
-        String source = router + (String) viewPanel.table.getValueAt(index, 0);
-        var opt = JOptionPane.showConfirmDialog(getContentPane(), "are you sure remove this " + (isDir ? "directory" : "file"), "remove operate", JOptionPane.YES_NO_OPTION);
+        var file = viewPanel.table.getRow(index);
+        String source = router + file.getName();
+        var opt = JOptionPane.showConfirmDialog(getContentPane(), "are you sure remove this " + (file.isDirectory() ? "directory" : "file"), "remove operate", JOptionPane.YES_NO_OPTION);
         if (opt == JOptionPane.YES_OPTION) {
             Response response = null;
             try {

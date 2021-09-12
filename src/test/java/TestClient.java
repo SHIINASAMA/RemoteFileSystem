@@ -1,4 +1,4 @@
-import pers.kaoru.rfs.client.MainWindow;
+import pers.kaoru.rfs.client.ui.MainWindow;
 
 public class TestClient {
     public static void main(String[] args) {
