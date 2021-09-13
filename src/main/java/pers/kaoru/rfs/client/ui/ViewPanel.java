@@ -32,7 +32,6 @@ public class ViewPanel extends JPanel {
         add(topPanel, BorderLayout.NORTH);
 
         table = new FileTable();
-        table.setSize(300, 300);
         add(table, BorderLayout.CENTER);
 
         JPanel buttonPanel = new JPanel(new GridLayout(1,7,3,1));

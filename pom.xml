@@ -6,7 +6,7 @@
 
   <groupId>pers.kaoru</groupId>
   <artifactId>RemoteFileSystem</artifactId>
-  <version>0.1[.10]</version>
+  <version>0.1[.11]</version>
 
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
@@ -55,10 +55,6 @@
                     <Main-Class>pers.kaoru.rfs.Main</Main-Class>
                     <Multi-Release>true</Multi-Release>
                   </manifestEntries>
-                </transformer>
-                <transformer implementation
-                                     ="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
-                  <resource>src/main/resources</resource>
                 </transformer>
               </transformers>
             </configuration>

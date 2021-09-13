@@ -2,7 +2,6 @@ package pers.kaoru.rfs.client.ui;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Objects;
 
@@ -31,7 +30,7 @@ public class FileTableCellRenderer extends DefaultTableCellRenderer {
 
         label.setOpaque(true);
         if (isSelected) {
-            label.setBackground(new Color(104, 151, 187));
+            label.setBackground(new Color(184, 207, 229));
         } else {
             label.setBackground(Color.white);
         }

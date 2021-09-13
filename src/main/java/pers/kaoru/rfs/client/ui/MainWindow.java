@@ -113,6 +113,8 @@ public class MainWindow extends JFrame {
         viewPanel.flushButton.addActionListener(func -> onward("/"));
         viewPanel.mkdirButton.addActionListener(func -> newDir());
         viewPanel.removeButton.addActionListener(func -> remove());
+        viewPanel.moveButton.addActionListener(func -> move());
+        viewPanel.copyButton.addActionListener(func -> copy());
 
         add(viewPanel, "view");
     }
@@ -235,19 +237,13 @@ public class MainWindow extends JFrame {
             }
 
             @Override
-            protected Response doInBackground() throws Exception {
+            protected Response doInBackground() throws IOException {
                 return ClientUtils.ListShow(host, port, path, token);
             }
         }.execute();
 
     }
 
-    /**
-     * 刷新 JTable
-     *
-     * @param isBack  为 true 时 path 参数可为 null
-     * @param subName 子目录名称
-     */
     private void flush(Boolean isBack, String subName) {
         if (flushState) {
             return;
@@ -257,6 +253,13 @@ public class MainWindow extends JFrame {
         viewPanel.pathTextBox.setEnabled(false);
         viewPanel.backButton.setEnabled(false);
         viewPanel.table.setFocusable(false);
+
+        String path;
+        if (isBack) {
+            path = router.preback();
+        } else {
+            path = router.toString() + subName;
+        }
 
         new SwingWorker<Response, Void>() {
             @Override
@@ -299,25 +302,16 @@ public class MainWindow extends JFrame {
             }
 
             @Override
-            protected Response doInBackground() throws IOException {
-                String path;
-                if (isBack) {
-                    path = router.preback();
-                } else {
-                    path = router.toString() + subName;
-                }
-
+            protected Response doInBackground() throws Exception {
                 return ClientUtils.ListShow(host, port, path, token);
             }
-        }.
-
-                execute();
+        }.execute();
 
     }
 
     private void newDir() {
         String source = JOptionPane.showInputDialog(getContentPane(), "make a new directory");
-        if(source == null) return;
+        if (source == null) return;
         char[] chars = {'\"', '*', '?', '<', '>', '|'};
         for (char c : chars) {
             if (source.indexOf(c) != -1) {
@@ -327,20 +321,32 @@ public class MainWindow extends JFrame {
         }
 
         source = router + source;
-        Response response = null;
-        try {
-            response = ClientUtils.MakeDirectory(host, port, source, token);
-        } catch (IOException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(getContentPane(), e.getMessage());
-            return;
-        }
+        String finalSource = source;
 
-        if (response.getCode() == ResponseCode.OK) {
-            flush(false, "/");
-        } else {
-            JOptionPane.showMessageDialog(getContentPane(), response.getHeader("error"));
-        }
+        new SwingWorker<Response, Void>() {
+            @Override
+            protected void done() {
+                Response response = null;
+                try {
+                    response = get();
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(getContentPane(), e.getMessage());
+                    return;
+                }
+
+                if (response.getCode() == ResponseCode.OK) {
+                    flush(false, "/");
+                } else {
+                    JOptionPane.showMessageDialog(getContentPane(), response.getHeader("error"));
+                }
+            }
+
+            @Override
+            protected Response doInBackground() throws Exception {
+                return ClientUtils.MakeDirectory(host, port, finalSource, token);
+            }
+        }.execute();
     }
 
     private void remove() {
@@ -353,21 +359,112 @@ public class MainWindow extends JFrame {
         String source = router + file.getName();
         var opt = JOptionPane.showConfirmDialog(getContentPane(), "are you sure remove this " + (file.isDirectory() ? "directory" : "file"), "remove operate", JOptionPane.YES_NO_OPTION);
         if (opt == JOptionPane.YES_OPTION) {
-            Response response = null;
-            try {
-                response = ClientUtils.Remove(host, port, source, token);
-            } catch (IOException e) {
-                e.printStackTrace();
-                JOptionPane.showMessageDialog(getContentPane(), e.getMessage());
-                return;
-            }
+            new SwingWorker<Response, Void>() {
+                @Override
+                protected void done() {
+                    Response response = null;
+                    try {
+                        response = get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        e.printStackTrace();
+                        JOptionPane.showMessageDialog(getContentPane(), e.getMessage());
+                        return;
+                    }
 
-            if (response.getCode() == ResponseCode.OK) {
-                flush(false, "/");
-            } else {
-                JOptionPane.showMessageDialog(getContentPane(), "remove fail");
-            }
+                    if (response.getCode() == ResponseCode.OK) {
+                        flush(false, "/");
+                    } else {
+                        JOptionPane.showMessageDialog(getContentPane(), response.getHeader("error"));
+                    }
+                }
+
+                @Override
+                protected Response doInBackground() throws Exception {
+                    return ClientUtils.Remove(host, port, source, token);
+                }
+            }.execute();
         }
     }
 
+    private void move() {
+        int index = viewPanel.table.getSelectedIndex();
+        if (index == -1) {
+            return;
+        }
+
+        var window = new SelectWindow(this, host, port, token);
+        if (!window.isSelected()) {
+            return;
+        }
+
+        var file = viewPanel.table.getRow(index);
+        String source = router + file.getName();
+        String destination = window.getPath();
+
+        new SwingWorker<Response, Void>() {
+            @Override
+            protected void done() {
+                Response response = null;
+                try {
+                    response = get();
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(getContentPane(), e.getMessage());
+                    return;
+                }
+
+                if (response.getCode() == ResponseCode.OK) {
+                    flush(false, "/");
+                } else {
+                    JOptionPane.showMessageDialog(getContentPane(), response.getHeader("error"));
+                }
+            }
+
+            @Override
+            protected Response doInBackground() throws Exception {
+                return ClientUtils.Move(host, port, source, destination, token);
+            }
+        }.execute();
+    }
+
+    public void copy() {
+        int index = viewPanel.table.getSelectedIndex();
+        if (index == -1) {
+            return;
+        }
+
+        var window = new SelectWindow(this, host, port, token);
+        if (!window.isSelected()) {
+            return;
+        }
+
+        var file = viewPanel.table.getRow(index);
+        String source = router + file.getName();
+        String destination = window.getPath();
+
+        new SwingWorker<Response, Void>() {
+            @Override
+            protected void done() {
+                Response response = null;
+                try {
+                    response = get();
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(getContentPane(), e.getMessage());
+                    return;
+                }
+
+                if (response.getCode() == ResponseCode.OK) {
+                    flush(false, "/");
+                } else {
+                    JOptionPane.showMessageDialog(getContentPane(), response.getHeader("error"));
+                }
+            }
+
+            @Override
+            protected Response doInBackground() throws Exception {
+                return ClientUtils.Copy(host, port, source, destination, token);
+            }
+        }.execute();
+    }
 }
