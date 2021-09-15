@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutionException;
 
 public class SelectWindow extends JDialog {
 
-    private final JButton flushButton = new JButton("flush");
+    private final JButton refreshButton = new JButton("refresh");
     private final JButton backButton = new JButton("back");
     private final FileTable table = new FileTable();
     private final JTextField pathTextBox = new JTextField();
@@ -70,10 +70,10 @@ public class SelectWindow extends JDialog {
             }
         });
         backButton.addActionListener(func -> back());
-        flushButton.addActionListener(func -> flush(false, "/"));
+        refreshButton.addActionListener(func -> flush(false, "/"));
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.add(backButton, BorderLayout.WEST);
-        topPanel.add(flushButton, BorderLayout.EAST);
+        topPanel.add(refreshButton, BorderLayout.EAST);
         topPanel.add(pathTextBox, BorderLayout.CENTER);
         add(topPanel, BorderLayout.NORTH);
 

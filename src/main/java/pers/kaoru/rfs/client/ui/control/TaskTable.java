@@ -11,7 +11,7 @@ public class TaskTable extends JScrollPane {
     public TaskTable() {
         super();
 
-        String[] columnNames = {"name", "type", "progress", "speed"};
+        String[] columnNames = {"name", "type", "progress", "speed", "state"};
         Object[][] data = {};
         defaultTableModel = new DefaultTableModel(data, columnNames);
 

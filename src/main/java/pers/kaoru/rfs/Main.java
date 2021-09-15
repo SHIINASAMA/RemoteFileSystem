@@ -28,7 +28,7 @@ public class Main {
         log.setLevel(Level.DEBUG);
 
         String path = "./server.json";
-        String mode = ARGS_LAUNCH_MODE_SERVER;
+        String mode = ARGS_LAUNCH_MODE_CLIENT;
 
         if (args.length > 0) {
             String baseArg = args[0].toUpperCase();

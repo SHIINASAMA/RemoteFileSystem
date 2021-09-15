@@ -26,6 +26,8 @@ public class MainWindow extends JFrame {
     private final DownloadPanel downloadPanel = new DownloadPanel();
     private String token = "";
 
+    private final JPopupMenu viewMenu = new JPopupMenu();
+
     private String host = "";
     private int port = 0;
     private Boolean flushState = false;
@@ -42,6 +44,7 @@ public class MainWindow extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(layout);
 
+        initMenu();
         initLoginPanel();
         initViewPanel();
         initDownloadPanel();
@@ -68,6 +71,59 @@ public class MainWindow extends JFrame {
         add(loginPanel, "login");
     }
 
+    private void initMenu() {
+        ImageIcon refreshIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/refresh.png")));
+        JMenuItem refreshMenu = new JMenuItem("refresh", refreshIcon);
+        refreshMenu.addActionListener(func -> refresh(false, "/"));
+        viewMenu.add(refreshMenu);
+
+        viewMenu.add(new JSeparator());
+
+        ImageIcon mkdirIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/newdir.png")));
+        JMenuItem mkdirMenu = new JMenuItem("new directory", mkdirIcon);
+        mkdirMenu.addActionListener(func -> newDir());
+        viewMenu.add(mkdirMenu);
+
+        ImageIcon moveIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/move.png")));
+        JMenuItem moveMenu = new JMenuItem("move", moveIcon);
+        moveMenu.addActionListener(func -> move());
+        viewMenu.add(moveMenu);
+
+        ImageIcon copyIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/copy.png")));
+        JMenuItem copyMenu = new JMenuItem("copy", copyIcon);
+        copyMenu.addActionListener(func -> move());
+        viewMenu.add(copyMenu);
+
+        ImageIcon removeIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/remove.png")));
+        JMenuItem removeMenu = new JMenuItem("remove", removeIcon);
+        removeMenu.addActionListener(func -> remove());
+        viewMenu.add(removeMenu);
+
+        viewMenu.add(new JSeparator());
+
+        ImageIcon uploadIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/upload.png")));
+        JMenuItem uploadMenu = new JMenuItem("upload", uploadIcon);
+//        uploadMenu.addActionListener();
+        viewMenu.add(uploadMenu);
+
+        ImageIcon downloadIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/download.png")));
+        JMenuItem downloadMenu = new JMenuItem("download", downloadIcon);
+//        downloadMenu.addActionListener();
+        viewMenu.add(downloadMenu);
+
+        viewMenu.add(new JSeparator());
+
+        ImageIcon tasksIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/tasks.png")));
+        JMenuItem tasksMenu = new JMenuItem("task view", tasksIcon);
+//        tasksMenu.addActionListener();
+        viewMenu.add(tasksMenu);
+
+        ImageIcon settingsIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/settings.png")));
+        JMenuItem settingsMenu = new JMenuItem("settings", settingsIcon);
+//        settingsMenu.addActionListener();
+        viewMenu.add(settingsMenu);
+    }
+
     private void initViewPanel() {
 
         viewPanel.pathTextBox.addKeyListener(new KeyListener() {
@@ -92,13 +148,17 @@ public class MainWindow extends JFrame {
         viewPanel.table.addTableMouseEvent(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() >= 2) {
-                    int row = viewPanel.table.getSelectedIndex();
-                    var file = viewPanel.table.getRow(row);
-                    if (file.isDirectory()) {
-                        String name = file.getName();
-                        onward(name);
+                if (e.getButton() == MouseEvent.BUTTON1) {
+                    if (e.getClickCount() >= 2) {
+                        int row = viewPanel.table.getSelectedIndex();
+                        var file = viewPanel.table.getRow(row);
+                        if (file.isDirectory()) {
+                            String name = file.getName();
+                            onward(name);
+                        }
                     }
+                } else {
+                    viewMenu.show(getContentPane(), e.getX(), e.getY());
                 }
             }
 
@@ -123,15 +183,14 @@ public class MainWindow extends JFrame {
             }
         });
 
-        viewPanel.flushButton.addActionListener(func -> onward("/"));
-        viewPanel.mkdirButton.addActionListener(func -> newDir());
-        viewPanel.removeButton.addActionListener(func -> remove());
-        viewPanel.moveButton.addActionListener(func -> move());
-        viewPanel.copyButton.addActionListener(func -> copy());
-
-        viewPanel.taskViewButton.addActionListener(func -> {
-            layout.show(getContentPane(), "download");
-        });
+//        viewPanel.refreshButton.addActionListener(func -> onward("/"));
+//        viewPanel.mkdirButton.addActionListener(func -> newDir());
+//        viewPanel.removeButton.addActionListener(func -> remove());
+//        viewPanel.moveButton.addActionListener(func -> move());
+//        viewPanel.copyButton.addActionListener(func -> copy());
+//        viewPanel.taskViewButton.addActionListener(func -> {
+//            layout.show(getContentPane(), "download");
+//        });
 
         add(viewPanel, "view");
     }
@@ -213,12 +272,12 @@ public class MainWindow extends JFrame {
 
     private void back() {
         if (!router.isEmpty()) {
-            flush(true, null);
+            refresh(true, null);
         }
     }
 
     private void onward(String subName) {
-        flush(false, subName);
+        refresh(false, subName);
     }
 
     private void jump(String path) {
@@ -273,7 +332,7 @@ public class MainWindow extends JFrame {
 
     }
 
-    private void flush(Boolean isBack, String subName) {
+    private void refresh(Boolean isBack, String subName) {
         if (flushState) {
             return;
         }
@@ -365,7 +424,7 @@ public class MainWindow extends JFrame {
                 }
 
                 if (response.getCode() == ResponseCode.OK) {
-                    flush(false, "/");
+                    refresh(false, "/");
                 } else {
                     JOptionPane.showMessageDialog(getContentPane(), response.getHeader("error"));
                 }
@@ -401,7 +460,7 @@ public class MainWindow extends JFrame {
                     }
 
                     if (response.getCode() == ResponseCode.OK) {
-                        flush(false, "/");
+                        refresh(false, "/");
                     } else {
                         JOptionPane.showMessageDialog(getContentPane(), response.getHeader("error"));
                     }
@@ -443,7 +502,7 @@ public class MainWindow extends JFrame {
                 }
 
                 if (response.getCode() == ResponseCode.OK) {
-                    flush(false, "/");
+                    refresh(false, "/");
                 } else {
                     JOptionPane.showMessageDialog(getContentPane(), response.getHeader("error"));
                 }
@@ -484,7 +543,7 @@ public class MainWindow extends JFrame {
                 }
 
                 if (response.getCode() == ResponseCode.OK) {
-                    flush(false, "/");
+                    refresh(false, "/");
                 } else {
                     JOptionPane.showMessageDialog(getContentPane(), response.getHeader("error"));
                 }
