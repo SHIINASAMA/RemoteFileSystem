@@ -18,7 +18,7 @@ public class Config {
     private final int threads;
     private final LinkedList<UserInfo> users;
 
-    public static Config ConfigBuild(String path) throws IOException {
+    public static Config ConfigBuilder(String path) throws IOException {
         String host;
         int port;
         int backlog;

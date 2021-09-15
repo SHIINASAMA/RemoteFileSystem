@@ -18,7 +18,7 @@ Usage: java -jar RemoteFileSystem.jar [OPTION] ...
 
   --config-path     configuration file path, console and server mode need this argument
 
-  [  temp configuration file "config.json"  ]
+  [  temp configuration file "server.json"  ]
   ###########################################
   #                                         #
   #  {                                      #

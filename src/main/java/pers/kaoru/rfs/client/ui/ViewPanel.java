@@ -1,11 +1,9 @@
 package pers.kaoru.rfs.client.ui;
 
-import pers.kaoru.rfs.core.FileInfo;
+import pers.kaoru.rfs.client.ui.control.FileTable;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.Date;
 
 public class ViewPanel extends JPanel {
 

@@ -1,6 +1,7 @@
 package pers.kaoru.rfs.client.ui;
 
 import pers.kaoru.rfs.client.ClientUtils;
+import pers.kaoru.rfs.client.Config;
 import pers.kaoru.rfs.client.Router;
 import pers.kaoru.rfs.core.FileInfo;
 import pers.kaoru.rfs.core.web.Response;
@@ -22,12 +23,15 @@ public class MainWindow extends JFrame {
 
     private final LoginPanel loginPanel = new LoginPanel();
     private final ViewPanel viewPanel = new ViewPanel();
+    private final DownloadPanel downloadPanel = new DownloadPanel();
     private String token = "";
 
     private String host = "";
     private int port = 0;
     private Boolean flushState = false;
     private final Router router = new Router();
+
+    private Config config;
 
     public MainWindow() {
         String iconPath = Objects.requireNonNull(getClass().getResource("/res/icon.png")).getPath();
@@ -40,13 +44,22 @@ public class MainWindow extends JFrame {
 
         initLoginPanel();
         initViewPanel();
+        initDownloadPanel();
 
         setVisible(true);
 
-        /// 测试用参数
-        loginPanel.hostTextBox.setText("localhost");
-        loginPanel.portTextBox.setText("8080");
-        loginPanel.nameTextBox.setText("root");
+        try {
+            config = Config.ConfigBuilder("client.json");
+        } catch (IOException e) {
+            e.printStackTrace();
+            config = new Config("", 0, "", "/Downloads");
+        }
+
+        loginPanel.hostTextBox.setText(config.getLastHost());
+        loginPanel.portTextBox.setText(String.valueOf(config.getLastPort()));
+        loginPanel.nameTextBox.setText(config.getLastName());
+
+        /// 测试用
         loginPanel.pwdTextBox.setText("123");
     }
 
@@ -116,7 +129,18 @@ public class MainWindow extends JFrame {
         viewPanel.moveButton.addActionListener(func -> move());
         viewPanel.copyButton.addActionListener(func -> copy());
 
+        viewPanel.taskViewButton.addActionListener(func -> {
+            layout.show(getContentPane(), "download");
+        });
+
         add(viewPanel, "view");
+    }
+
+    private void initDownloadPanel() {
+        downloadPanel.backButton.addActionListener(func -> {
+            layout.show(getContentPane(), "view");
+        });
+        add(downloadPanel, "download");
     }
 
     private void login() {
@@ -138,6 +162,11 @@ public class MainWindow extends JFrame {
                 if (token != null) {
                     layout.show(getContentPane(), "view");
                     jump("/");
+
+                    config.setLastHost(loginPanel.hostTextBox.getText());
+                    config.setLastPort(Integer.parseInt(loginPanel.portTextBox.getText()));
+                    config.setLastName(loginPanel.nameTextBox.getText());
+                    Config.ConfigStore(config);
                 }
             }
 

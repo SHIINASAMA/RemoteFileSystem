@@ -2,6 +2,7 @@ package pers.kaoru.rfs.client.ui;
 
 import pers.kaoru.rfs.client.ClientUtils;
 import pers.kaoru.rfs.client.Router;
+import pers.kaoru.rfs.client.ui.control.FileTable;
 import pers.kaoru.rfs.core.FileInfo;
 import pers.kaoru.rfs.core.web.Response;
 import pers.kaoru.rfs.core.web.ResponseCode;

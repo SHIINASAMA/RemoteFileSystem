@@ -1,4 +1,4 @@
-package pers.kaoru.rfs.client.ui;
+package pers.kaoru.rfs.client.ui.control;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;

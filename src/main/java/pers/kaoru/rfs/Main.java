@@ -27,7 +27,7 @@ public class Main {
         log = (Logger) LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
         log.setLevel(Level.DEBUG);
 
-        String path = "./config.json";
+        String path = "./server.json";
         String mode = ARGS_LAUNCH_MODE_SERVER;
 
         if (args.length > 0) {
@@ -60,20 +60,12 @@ public class Main {
             }
         }
 
-        System.out.println("pickup option: " + ARGS_CONFIG_PATH + " " + path);
-        System.out.println("pickup option: " + ARGS_LAUNCH_MODE + " " + mode);
-
-//        if(config.getWorkDirectory().contains("..")){
-//            System.out.println("error: invalid path \"" + config.getWorkDirectory() + "\"");
-//            return;
-//        }
-
         switch (mode) {
             case ARGS_LAUNCH_MODE_TEST: {
                 System.out.println("################ Test Mode ################");
                 Config config;
                 try {
-                    config = Config.ConfigBuild(path);
+                    config = Config.ConfigBuilder(path);
                     File workdir = new File(config.getWorkDirectory());
                     if(!workdir.exists() || !workdir.isDirectory()){
                         throw new FileNotFoundException("no directory named \"" +  config.getWorkDirectory() + "\"");
@@ -104,7 +96,7 @@ public class Main {
             case ARGS_LAUNCH_MODE_SERVER:
                 System.out.println("################  SERVER   ################");
                 try {
-                    Config config = Config.ConfigBuild(path);
+                    Config config = Config.ConfigBuilder(path);
                     File workdir = new File(config.getWorkDirectory());
                     if(!workdir.exists() || !workdir.isDirectory()){
                         throw new FileNotFoundException("no directory named \"" +  config.getWorkDirectory() + "\"");

@@ -1,5 +1,6 @@
-package pers.kaoru.rfs.client.ui;
+package pers.kaoru.rfs.client.ui.control;
 
+import pers.kaoru.rfs.client.BitCount;
 import pers.kaoru.rfs.core.FileInfo;
 
 import javax.swing.*;
@@ -46,16 +47,15 @@ public class FileTable extends JScrollPane {
 
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         var last = simpleDateFormat.format(new Date(info.getLast()));
-        defaultTableModel.addRow(new Object[]{name, isDir, size, last});
+        defaultTableModel.addRow(new Object[]{name, isDir, BitCount.ToString(size), last});
     }
 
     public FileInfo getRow(int index) {
         var name = (String) table.getValueAt(index, 0);
         var isDir = table.getValueAt(index, 1).equals("DIR");
-        var size = (long) table.getValueAt(index, 2);
         var last = (String) table.getValueAt(index, 3);
         try {
-            return new FileInfo(name, isDir, size, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(last).getTime());
+            return new FileInfo(name, isDir, 0L, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(last).getTime());
         } catch (ParseException e) {
             e.printStackTrace();
             return null;
