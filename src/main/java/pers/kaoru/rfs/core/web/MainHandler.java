@@ -419,6 +419,14 @@ public class MainHandler implements ImplHandler {
             return;
         }
 
+        // 若区间为 0-0/xxx 则不发送文件，返回文件长度信息
+        if(range.getBegin() == 0 && range.getEnd() == 0){
+            response.setCode(ResponseCode.OK);
+            response.setHeader("range", new Range(range.getBegin(), range.getEnd(), srcFile.length()).toString());
+            log.info("download [" + username + "] " + source + "[" + range.getBegin() + "-" + range.getEnd() + "]");
+            return;
+        }
+
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(srcFile.getPath(), "r")) {
             randomAccessFile.seek(range.getBegin());
             var outputStream = socket.getOutputStream();

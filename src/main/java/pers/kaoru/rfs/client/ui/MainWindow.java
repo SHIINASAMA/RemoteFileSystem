@@ -36,8 +36,8 @@ public class MainWindow extends JFrame {
     private Config config;
 
     public MainWindow() {
-        String iconPath = Objects.requireNonNull(getClass().getResource("/res/icon.png")).getPath();
-        setIconImage(new ImageIcon(iconPath).getImage());
+        ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/icon.png")));
+        setIconImage(icon.getImage());
         setTitle("RFS Client");
         setSize(800, 600);
         setLocationRelativeTo(null);
@@ -55,7 +55,7 @@ public class MainWindow extends JFrame {
             config = Config.ConfigBuilder("client.json");
         } catch (IOException e) {
             e.printStackTrace();
-            config = new Config("", 0, "", "/Downloads");
+            config = new Config("", 8080, "", "/Downloads");
         }
 
         loginPanel.hostTextBox.setText(config.getLastHost());
@@ -91,7 +91,7 @@ public class MainWindow extends JFrame {
 
         ImageIcon copyIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/copy.png")));
         JMenuItem copyMenu = new JMenuItem("copy", copyIcon);
-        copyMenu.addActionListener(func -> move());
+        copyMenu.addActionListener(func -> copy());
         viewMenu.add(copyMenu);
 
         ImageIcon removeIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/remove.png")));
@@ -115,13 +115,8 @@ public class MainWindow extends JFrame {
 
         ImageIcon tasksIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/tasks.png")));
         JMenuItem tasksMenu = new JMenuItem("task view", tasksIcon);
-//        tasksMenu.addActionListener();
+        tasksMenu.addActionListener(func -> layout.show(getContentPane(), "download"));
         viewMenu.add(tasksMenu);
-
-        ImageIcon settingsIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/settings.png")));
-        JMenuItem settingsMenu = new JMenuItem("settings", settingsIcon);
-//        settingsMenu.addActionListener();
-        viewMenu.add(settingsMenu);
     }
 
     private void initViewPanel() {
@@ -196,9 +191,7 @@ public class MainWindow extends JFrame {
     }
 
     private void initDownloadPanel() {
-        downloadPanel.backButton.addActionListener(func -> {
-            layout.show(getContentPane(), "view");
-        });
+        downloadPanel.backButton.addActionListener(func -> layout.show(getContentPane(), "view"));
         add(downloadPanel, "download");
     }
 

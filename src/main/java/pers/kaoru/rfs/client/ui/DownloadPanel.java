@@ -8,19 +8,16 @@ import java.awt.*;
 public class DownloadPanel extends JPanel {
 
     public final TaskTable table = new TaskTable();
-    public final JButton pauseButton = new JButton("pause");
-    public final JButton removeButton = new JButton("remove task");
     public final JButton backButton = new JButton("back");
 
     public DownloadPanel() {
         setLayout(new BorderLayout());
         add(table, BorderLayout.CENTER);
 
-        JPanel bottomPanel = new JPanel();
-        bottomPanel.add(backButton);
-        bottomPanel.add(pauseButton);
-        bottomPanel.add(removeButton);
-        add(bottomPanel, BorderLayout.SOUTH);
+        JPanel buttonPanel = new JPanel(new BorderLayout());
+        buttonPanel.add(backButton, BorderLayout.EAST);
+
+        add(buttonPanel, BorderLayout.SOUTH);
 
         setVisible(true);
     }
