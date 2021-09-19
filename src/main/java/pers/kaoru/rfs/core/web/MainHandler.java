@@ -8,6 +8,7 @@ import pers.kaoru.rfs.core.ImplFileOperator;
 
 import java.io.*;
 import java.net.Socket;
+import java.rmi.registry.Registry;
 import java.util.LinkedList;
 
 import static pers.kaoru.rfs.core.Error.*;
@@ -16,21 +17,21 @@ public class MainHandler implements ImplHandler {
 
     private final ImplFileOperator operator;
     private final String prefixPath;
-    private final UserManger userManger;
+    private final UserManager userManager;
     private final Logger log;
 
     public static MainHandler HandlerBuild(String prefixPath, LinkedList<UserInfo> users, Logger logger) {
-        UserManger userManger = new UserManger();
+        UserManager userManager = new UserManager();
         for (var user : users) {
-            userManger.addUser(user);
+            userManager.addUser(user);
         }
-        return new MainHandler(prefixPath, userManger, logger);
+        return new MainHandler(prefixPath, userManager, logger);
     }
 
-    private MainHandler(String prefixPath, UserManger userManger, Logger logger) {
+    private MainHandler(String prefixPath, UserManager userManager, Logger logger) {
         this.prefixPath = prefixPath;
         operator = new FileOperator();
-        this.userManger = userManger;
+        this.userManager = userManager;
         log = logger;
     }
 
@@ -40,34 +41,20 @@ public class MainHandler implements ImplHandler {
             Request request = WebUtils.ReadRequest(socket);
             Response response = new Response();
             switch (request.getMethod()) {
-                case LIST_SHOW:
-                    listShow(socket, request, response);
-                    break;
-                case REMOVE:
-                    remove(socket, request, response);
-                    break;
-                case COPY:
-                    copy(socket, request, response);
-                    break;
-                case MOVE:
-                    move(socket, request, response);
-                    break;
-                case MAKE_DIRECTORY:
-                    makeDirectory(socket, request, response);
-                    break;
-                case UPLOAD:
-                    upload(socket, request, response);
-                    break;
-                case DOWNLOAD:
-                    download(socket, request, response);
-                    break;
-                case VERIFY:
-                    verify(socket, request, response);
-                    break;
-                default:
-                    break;
+                case LIST_SHOW -> listShow(socket, request, response);
+                case REMOVE -> remove(socket, request, response);
+                case COPY -> copy(socket, request, response);
+                case MOVE -> move(socket, request, response);
+                case MAKE_DIRECTORY -> makeDirectory(socket, request, response);
+                case UPLOAD -> upload(socket, request, response);
+                case DOWNLOAD -> download(socket, request, response);
+                case VERIFY -> verify(socket, request, response);
+                default -> {
+                }
             }
-            WebUtils.WriteResponse(socket, response);
+            if (request.getMethod() != RequestMethod.DOWNLOAD && request.getMethod() != RequestMethod.UPLOAD) {
+                WebUtils.WriteResponse(socket, response);
+            }
         } catch (Exception exception) {
             exception.printStackTrace();
             log.warn(exception.getMessage());
@@ -109,7 +96,7 @@ public class MainHandler implements ImplHandler {
         }
 
         String name = result.get("username");
-        UserInfo info = userManger.getUser(name);
+        UserInfo info = userManager.getUser(name);
         if (info == null) {
             response.setCode(ResponseCode.FAIL);
             response.setError(Error.NO_USER);
@@ -117,7 +104,7 @@ public class MainHandler implements ImplHandler {
             return null;
         }
 
-        if (!UserManger.VerifyPermission(info, permission)) {
+        if (!UserManager.VerifyPermission(info, permission)) {
             response.setCode(ResponseCode.FAIL);
             response.setError(PERMISSION_DENIED);
             log.warn(PERMISSION_DENIED + " [" + name + "]");
@@ -324,6 +311,7 @@ public class MainHandler implements ImplHandler {
         if (source == null || rangeStr == null) {
             response.setCode(ResponseCode.FAIL);
             response.setError(ILLEGAL_PARAMETER);
+            WebUtils.WriteResponse(socket, response);
             log.warn(ILLEGAL_PARAMETER);
             return;
         }
@@ -337,6 +325,7 @@ public class MainHandler implements ImplHandler {
             if (srcFile.isDirectory()) {
                 response.setCode(ResponseCode.FAIL);
                 response.setError(ILLEGAL_PATH);
+                WebUtils.WriteResponse(socket, response);
                 log.warn(ILLEGAL_PATH + ": " + source);
                 return;
             }
@@ -344,6 +333,7 @@ public class MainHandler implements ImplHandler {
             if (!srcFile.createNewFile()) {
                 response.setCode(ResponseCode.FAIL);
                 response.setError(CREATE_FILE_FAIL);
+                WebUtils.WriteResponse(socket, response);
                 log.warn(CREATE_FILE_FAIL + ": " + source);
                 return;
             }
@@ -353,9 +343,14 @@ public class MainHandler implements ImplHandler {
         if (range.getBegin() > srcFile.length()) {
             response.setCode(ResponseCode.FAIL);
             response.setError(ILLEGAL_SEEK_LOCATION);
+            WebUtils.WriteResponse(socket, response);
             log.warn(ILLEGAL_SEEK_LOCATION + ": " + range.getBegin());
             return;
         }
+
+        response.setCode(ResponseCode.OK);
+        WebUtils.WriteResponse(socket, response);
+        log.info("upload [" + username + "] " + source);
 
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(srcFile.getPath(), "rw")) {
             randomAccessFile.seek(range.getBegin());
@@ -378,8 +373,6 @@ public class MainHandler implements ImplHandler {
                 count -= length;
                 randomAccessFile.write(bytes, 0, (int) length);
             }
-            response.setCode(ResponseCode.OK);
-            log.info("upload [" + username + "] " + source);
         }
     }
 
@@ -395,6 +388,7 @@ public class MainHandler implements ImplHandler {
         if (source == null || rangeStr == null) {
             response.setCode(ResponseCode.FAIL);
             response.setError(ILLEGAL_PARAMETER);
+            WebUtils.WriteResponse(socket, response);
             log.warn(ILLEGAL_PARAMETER);
             return;
         }
@@ -407,6 +401,7 @@ public class MainHandler implements ImplHandler {
         if (!srcFile.exists()) {
             response.setCode(ResponseCode.FAIL);
             response.setError(ILLEGAL_PATH);
+            WebUtils.WriteResponse(socket, response);
             log.warn(ILLEGAL_PATH + ": " + source);
             return;
         }
@@ -415,17 +410,24 @@ public class MainHandler implements ImplHandler {
         if (range.getBegin() > srcFile.length()) {
             response.setCode(ResponseCode.FAIL);
             response.setError(ILLEGAL_SEEK_LOCATION);
+            WebUtils.WriteResponse(socket, response);
             log.warn(ILLEGAL_SEEK_LOCATION + ": " + range.getBegin());
             return;
         }
 
         // 若区间为 0-0/xxx 则不发送文件，返回文件长度信息
-        if(range.getBegin() == 0 && range.getEnd() == 0){
+        if (range.getBegin() == 0 && range.getEnd() == 0) {
             response.setCode(ResponseCode.OK);
             response.setHeader("range", new Range(range.getBegin(), range.getEnd(), srcFile.length()).toString());
+            WebUtils.WriteResponse(socket, response);
             log.info("download [" + username + "] " + source + "[" + range.getBegin() + "-" + range.getEnd() + "]");
             return;
         }
+
+        response.setCode(ResponseCode.OK);
+        response.setHeader("range", new Range(range.getBegin(), range.getEnd(), srcFile.length()).toString());
+        WebUtils.WriteResponse(socket, response);
+        log.info("download [" + username + "] " + source + "[" + range.getBegin() + "-" + range.getEnd() + "]");
 
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(srcFile.getPath(), "r")) {
             randomAccessFile.seek(range.getBegin());
@@ -446,9 +448,6 @@ public class MainHandler implements ImplHandler {
                 count -= length;
                 outputStream.write(bytes, 0, length);
             }
-            response.setCode(ResponseCode.OK);
-            response.setHeader("range", new Range(range.getBegin(), range.getEnd(), srcFile.length()).toString());
-            log.info("download [" + username + "] " + source + "[" + range.getBegin() + "-" + range.getEnd() + "]");
         }
     }
 
@@ -462,7 +461,7 @@ public class MainHandler implements ImplHandler {
             return;
         }
 
-        UserInfo info = userManger.getUser(name);
+        UserInfo info = userManager.getUser(name);
         if (info == null) {
             response.setCode(ResponseCode.FAIL);
             response.setError(NO_USER);
@@ -473,7 +472,7 @@ public class MainHandler implements ImplHandler {
         if (!info.getPassword().equals(pwd)) {
             response.setCode(ResponseCode.FAIL);
             response.setError(WRONG_PASSWORD);
-            log.warn(WRONG_PASSWORD +  " [" + name + "]");
+            log.warn(WRONG_PASSWORD + " [" + name + "]");
             return;
         }
 

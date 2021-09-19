@@ -2,11 +2,11 @@ package pers.kaoru.rfs.core.web;
 
 import java.util.TreeMap;
 
-public class UserManger {
+public class UserManager {
 
     private final TreeMap<String ,UserInfo> users;
 
-    public UserManger(){
+    public UserManager(){
         users = new TreeMap<>();
     }
 

@@ -30,7 +30,7 @@ public class MainWindow extends JFrame {
 
     private String host = "";
     private int port = 0;
-    private Boolean flushState = false;
+    private Boolean refreshState = false;
     private final Router router = new Router();
 
     private Config config;
@@ -223,7 +223,7 @@ public class MainWindow extends JFrame {
             }
 
             @Override
-            protected String doInBackground() throws Exception {
+            protected String doInBackground() {
                 host = loginPanel.hostTextBox.getText();
                 var portStr = loginPanel.portTextBox.getText();
                 var name = loginPanel.nameTextBox.getText();
@@ -274,10 +274,10 @@ public class MainWindow extends JFrame {
     }
 
     private void jump(String path) {
-        if (flushState) {
+        if (refreshState) {
             return;
         }
-        flushState = true;
+        refreshState = true;
 
         viewPanel.pathTextBox.setEnabled(false);
         viewPanel.backButton.setEnabled(false);
@@ -294,7 +294,7 @@ public class MainWindow extends JFrame {
                     viewPanel.pathTextBox.setEnabled(true);
                     viewPanel.backButton.setEnabled(true);
                     viewPanel.table.setFocusable(true);
-                    flushState = false;
+                    refreshState = false;
                     JOptionPane.showMessageDialog(getContentPane(), e.getMessage());
                     return;
                 }
@@ -314,7 +314,7 @@ public class MainWindow extends JFrame {
                 viewPanel.pathTextBox.setEnabled(true);
                 viewPanel.backButton.setEnabled(true);
                 viewPanel.table.setFocusable(true);
-                flushState = false;
+                refreshState = false;
             }
 
             @Override
@@ -326,10 +326,10 @@ public class MainWindow extends JFrame {
     }
 
     private void refresh(Boolean isBack, String subName) {
-        if (flushState) {
+        if (refreshState) {
             return;
         }
-        flushState = true;
+        refreshState = true;
 
         viewPanel.pathTextBox.setEnabled(false);
         viewPanel.backButton.setEnabled(false);
@@ -353,7 +353,7 @@ public class MainWindow extends JFrame {
                     viewPanel.pathTextBox.setEnabled(true);
                     viewPanel.backButton.setEnabled(true);
                     viewPanel.table.setFocusable(true);
-                    flushState = false;
+                    refreshState = false;
                     JOptionPane.showMessageDialog(getContentPane(), e.getMessage());
                     return;
                 }
@@ -379,7 +379,7 @@ public class MainWindow extends JFrame {
                 viewPanel.pathTextBox.setEnabled(true);
                 viewPanel.backButton.setEnabled(true);
                 viewPanel.table.setFocusable(true);
-                flushState = false;
+                refreshState = false;
             }
 
             @Override
@@ -392,7 +392,9 @@ public class MainWindow extends JFrame {
 
     private void newDir() {
         String source = JOptionPane.showInputDialog(getContentPane(), "make a new directory");
-        if (source == null) return;
+        if (source == null) {
+            return;
+        }
         char[] chars = {'\"', '*', '?', '<', '>', '|'};
         for (char c : chars) {
             if (source.indexOf(c) != -1) {

@@ -7,6 +7,7 @@ public class TaskTable extends JScrollPane {
 
     private final DefaultTableModel defaultTableModel;
     private final JTable table;
+    private final TaskTableCellRenderer taskTableCellRenderer = new TaskTableCellRenderer();
 
     public TaskTable() {
         super();
@@ -22,7 +23,11 @@ public class TaskTable extends JScrollPane {
             }
         };
         table.getColumnModel().getColumn(2).setPreferredWidth(300);
-        table.getColumnModel().getColumn(2).setCellRenderer(new TaskTableCellRenderer());
+        table.getColumnModel().getColumn(0).setCellRenderer(taskTableCellRenderer);
+        table.getColumnModel().getColumn(1).setCellRenderer(taskTableCellRenderer);
+        table.getColumnModel().getColumn(2).setCellRenderer(taskTableCellRenderer);
+        table.getColumnModel().getColumn(3).setCellRenderer(taskTableCellRenderer);
+        table.getColumnModel().getColumn(4).setCellRenderer(taskTableCellRenderer);
 
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setRowHeight(29);
@@ -33,5 +38,9 @@ public class TaskTable extends JScrollPane {
         setViewportView(table);
         setVisible(true);
 
+    }
+
+    public void clear() {
+        defaultTableModel.setRowCount(0);
     }
 }

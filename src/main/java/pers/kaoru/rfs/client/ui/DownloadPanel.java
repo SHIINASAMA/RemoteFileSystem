@@ -21,4 +21,12 @@ public class DownloadPanel extends JPanel {
 
         setVisible(true);
     }
+
+    public void updateTable(){
+        table.updateUI();
+    }
+
+    public void clear(){
+        table.clear();
+    }
 }

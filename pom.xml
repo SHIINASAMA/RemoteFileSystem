@@ -6,7 +6,7 @@
 
   <groupId>pers.kaoru</groupId>
   <artifactId>RemoteFileSystem</artifactId>
-  <version>0.1[.15]</version>
+  <version>0.1[.17]</version>
 
   <properties>
     <maven.compiler.source>17</maven.compiler.source>
