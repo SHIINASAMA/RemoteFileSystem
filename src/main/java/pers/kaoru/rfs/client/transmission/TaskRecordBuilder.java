@@ -1,24 +1,23 @@
 package pers.kaoru.rfs.client.transmission;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
+import java.io.*;
 import java.util.LinkedList;
 import java.util.List;
 
-public class TaskBuilder {
+public class TaskRecordBuilder {
 
     private final String host;
     private final int port;
+    private final String token;
 
-    public TaskBuilder(String host, int port) {
+    public TaskRecordBuilder(String host, int port, String token) {
         this.host = host;
-        this.port =port;
+        this.port = port;
+        this.token = token;
     }
 
-    public TaskRecord build(String remoteUrl, long length, TaskType type) {
-        return new TaskRecord(host, port, remoteUrl, length, type);
+    public TaskRecord build(String remoteUrl, String localUrl, long length, TaskType type) {
+        return new TaskRecord(host, port, token, remoteUrl, localUrl, length, type);
     }
 
     public List<TaskRecord> build(String path) {

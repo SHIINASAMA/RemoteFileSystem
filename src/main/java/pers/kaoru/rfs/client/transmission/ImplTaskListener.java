@@ -18,8 +18,9 @@ public interface ImplTaskListener {
     /**
      * 任务失败
      * @param record 任务记录
+     * @param error 错误描述
      */
-    void onFailed(TaskRecord record);
+    void onFailed(TaskRecord record, String error);
 
     /**
      * 任务暂停

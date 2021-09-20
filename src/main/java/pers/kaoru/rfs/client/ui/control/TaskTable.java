@@ -12,7 +12,7 @@ public class TaskTable extends JScrollPane {
     public TaskTable() {
         super();
 
-        String[] columnNames = {"name", "type", "progress", "speed", "state"};
+        String[] columnNames = {"uid", "name", "type", "progress", "fraction", "speed", "state"};
         Object[][] data = {};
         defaultTableModel = new DefaultTableModel(data, columnNames);
 
@@ -22,12 +22,13 @@ public class TaskTable extends JScrollPane {
                 return false;
             }
         };
-        table.getColumnModel().getColumn(2).setPreferredWidth(300);
         table.getColumnModel().getColumn(0).setCellRenderer(taskTableCellRenderer);
         table.getColumnModel().getColumn(1).setCellRenderer(taskTableCellRenderer);
         table.getColumnModel().getColumn(2).setCellRenderer(taskTableCellRenderer);
         table.getColumnModel().getColumn(3).setCellRenderer(taskTableCellRenderer);
         table.getColumnModel().getColumn(4).setCellRenderer(taskTableCellRenderer);
+        table.getColumnModel().getColumn(5).setCellRenderer(taskTableCellRenderer);
+        table.getColumnModel().getColumn(6).setCellRenderer(taskTableCellRenderer);
 
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setRowHeight(29);
@@ -42,5 +43,17 @@ public class TaskTable extends JScrollPane {
 
     public void clear() {
         defaultTableModel.setRowCount(0);
+    }
+
+    public void add(TaskView view) {
+        defaultTableModel.addRow(new Object[]{
+                view.getUidLabel(),
+                view.getNameLabel(),
+                view.getTypeLabel(),
+                view.getProgressBar(),
+                view.getFractionLabel(),
+                view.getSpeedLabel(),
+                view.getStateLabel()
+        });
     }
 }

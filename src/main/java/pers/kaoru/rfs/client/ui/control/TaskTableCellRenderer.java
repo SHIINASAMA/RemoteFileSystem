@@ -14,7 +14,7 @@ public class TaskTableCellRenderer extends DefaultTableCellRenderer {
             ((Component) value).setBackground(Color.white);
         }
 
-        if (column == 2) {
+        if (column == 3) {
             return (JProgressBar) value;
         } else {
             var label = (JLabel) value;

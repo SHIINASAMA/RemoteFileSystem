@@ -1,8 +1,11 @@
 package pers.kaoru.rfs.client.ui;
 
+import pers.kaoru.rfs.client.BitCount;
 import pers.kaoru.rfs.client.ClientUtils;
 import pers.kaoru.rfs.client.Config;
 import pers.kaoru.rfs.client.Router;
+import pers.kaoru.rfs.client.transmission.*;
+import pers.kaoru.rfs.client.ui.control.TaskView;
 import pers.kaoru.rfs.core.FileInfo;
 import pers.kaoru.rfs.core.web.Response;
 import pers.kaoru.rfs.core.web.ResponseCode;
@@ -14,6 +17,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
@@ -32,8 +36,9 @@ public class MainWindow extends JFrame {
     private int port = 0;
     private Boolean refreshState = false;
     private final Router router = new Router();
-
     private Config config;
+
+    private final HashMap<String, TaskView> taskViewHashMap = new HashMap<>();
 
     public MainWindow() {
         ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/icon.png")));
@@ -108,7 +113,7 @@ public class MainWindow extends JFrame {
 
         ImageIcon downloadIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/download.png")));
         JMenuItem downloadMenu = new JMenuItem("download", downloadIcon);
-//        downloadMenu.addActionListener();
+        downloadMenu.addActionListener(func -> download());
         viewMenu.add(downloadMenu);
 
         viewMenu.add(new JSeparator());
@@ -178,21 +183,78 @@ public class MainWindow extends JFrame {
             }
         });
 
-//        viewPanel.refreshButton.addActionListener(func -> onward("/"));
-//        viewPanel.mkdirButton.addActionListener(func -> newDir());
-//        viewPanel.removeButton.addActionListener(func -> remove());
-//        viewPanel.moveButton.addActionListener(func -> move());
-//        viewPanel.copyButton.addActionListener(func -> copy());
-//        viewPanel.taskViewButton.addActionListener(func -> {
-//            layout.show(getContentPane(), "download");
-//        });
-
         add(viewPanel, "view");
     }
 
     private void initDownloadPanel() {
         downloadPanel.backButton.addActionListener(func -> layout.show(getContentPane(), "view"));
         add(downloadPanel, "download");
+    }
+
+    private void initDispatcher() {
+        TaskDispatcher.init(2, host, port, token, new ImplTaskListener() {
+            @Override
+            public void onProgress(TaskRecord record, long speed) {
+                TaskView view = taskViewHashMap.get(record.getUid());
+                if (view == null) {
+                    return;
+                }
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        view.updateProgress();
+                        view.updateSpeed(speed);
+                        view.setState(TaskState.RUNNING);
+                        downloadPanel.updateTable();
+                    }
+                });
+            }
+
+            @Override
+            public void onNewTask(TaskRecord record) {
+
+            }
+
+            @Override
+            public void onFailed(TaskRecord record, String error) {
+
+            }
+
+            @Override
+            public void onPaused(TaskRecord record) {
+
+            }
+
+            @Override
+            public void onStart(TaskRecord record) {
+
+            }
+
+            @Override
+            public void onResume(TaskRecord record) {
+
+            }
+
+            @Override
+            public void onFinish(TaskRecord record) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        TaskView view = taskViewHashMap.get(record.getUid());
+                        view.setState(TaskState.FINISH);
+                        view.getProgressBar().setValue(100);
+                        view.getFractionLabel().setText(BitCount.ToString(record.getLength()));
+                        view.getSpeedLabel().setText("0B/S");
+                        downloadPanel.updateTable();
+                    }
+                });
+            }
+
+            @Override
+            public void onCanceled(TaskRecord record) {
+
+            }
+        });
     }
 
     private void login() {
@@ -219,6 +281,7 @@ public class MainWindow extends JFrame {
                     config.setLastPort(Integer.parseInt(loginPanel.portTextBox.getText()));
                     config.setLastName(loginPanel.nameTextBox.getText());
                     Config.ConfigStore(config);
+                    initDispatcher();
                 }
             }
 
@@ -510,7 +573,7 @@ public class MainWindow extends JFrame {
         }.execute();
     }
 
-    public void copy() {
+    private void copy() {
         int index = viewPanel.table.getSelectedIndex();
         if (index == -1) {
             return;
@@ -549,5 +612,21 @@ public class MainWindow extends JFrame {
                 return ClientUtils.Copy(host, port, source, destination, token);
             }
         }.execute();
+    }
+
+    private void download() {
+        int index = viewPanel.table.getSelectedIndex();
+        if (index == -1) {
+            return;
+        }
+
+        var file = viewPanel.table.getRow(index);
+        String source = router + file.getName();
+
+        TaskRecord record = new TaskRecord(host, port, token, source, config.getDownloadDir(), 0, TaskType.DOWNLOAD);
+        TaskView view = new TaskView(record);
+        downloadPanel.table.add(view);
+        taskViewHashMap.put(record.getUid(), view);
+        TaskDispatcher.get().add(new Task(record, 0));
     }
 }
