@@ -1,6 +1,8 @@
 package pers.kaoru.rfs.client.transmission;
 
+import java.io.*;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.concurrent.*;
 
 public class TaskDispatcher extends Thread {
@@ -28,12 +30,7 @@ public class TaskDispatcher extends Thread {
 
     private TaskDispatcher(int maxTaskAmount, String host, int port, String token, ImplTaskListener listener) {
         permit = new Semaphore(maxTaskAmount);
-        executorService = new ThreadPoolExecutor(maxTaskAmount, maxTaskAmount, 1000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-                return new Thread(r, "task_thread");
-            }
-        });
+        executorService = new ThreadPoolExecutor(maxTaskAmount, maxTaskAmount, 1000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), r -> new Thread(r, "task_thread"));
         this.listener = listener;
         start();
     }
@@ -66,7 +63,6 @@ public class TaskDispatcher extends Thread {
     public void start(Task task) {
         task.setState(TaskState.RUNNING);
         executorService.execute(task);
-//        listener.onStart(task.getRecord());
         onStart(task.getRecord());
     }
 
@@ -143,6 +139,36 @@ public class TaskDispatcher extends Thread {
 
     public void onCanceled(TaskRecord record) {
         permit.release();
+        taskHashMap.remove(record.getUid());
         listener.onCanceled(record);
+    }
+
+    public void save() {
+        LinkedList<TaskRecord> records = new LinkedList<>();
+        for (var task : taskHashMap.values()) {
+            task.setState(TaskState.PAUSED);
+            records.add(task.getRecord());
+        }
+
+        try {
+            OutputStream outputStream = new FileOutputStream("./tasks.data");
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+            objectOutputStream.writeObject(records);
+            objectOutputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public LinkedList<TaskRecord> load(int port, String token) {
+        try {
+            InputStream inputStream = new FileInputStream("./tasks.data");
+            ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+            LinkedList<TaskRecord> records = (LinkedList<TaskRecord>) objectInputStream.readObject();
+            objectInputStream.close();
+            return records;
+        } catch (IOException | ClassNotFoundException exception) {
+            return new LinkedList<>();
+        }
     }
 }

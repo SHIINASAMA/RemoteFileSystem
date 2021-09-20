@@ -12,10 +12,7 @@ import pers.kaoru.rfs.core.web.ResponseCode;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -64,12 +61,51 @@ public class MainWindow extends JFrame {
             config = new Config("", 8080, "", "/Downloads");
         }
 
+        addWindowListener(new WindowListener() {
+            @Override
+            public void windowOpened(WindowEvent e) {
+
+            }
+
+            @Override
+            public void windowClosing(WindowEvent e) {
+                if (!token.isEmpty()) {
+                    TaskDispatcher.get().save();
+                }
+            }
+
+            @Override
+            public void windowClosed(WindowEvent e) {
+
+            }
+
+            @Override
+            public void windowIconified(WindowEvent e) {
+
+            }
+
+            @Override
+            public void windowDeiconified(WindowEvent e) {
+
+            }
+
+            @Override
+            public void windowActivated(WindowEvent e) {
+
+            }
+
+            @Override
+            public void windowDeactivated(WindowEvent e) {
+
+            }
+        });
+
         loginPanel.hostTextBox.setText(config.getLastHost());
         loginPanel.portTextBox.setText(String.valueOf(config.getLastPort()));
         loginPanel.nameTextBox.setText(config.getLastName());
 
         /// 测试用
-        loginPanel.pwdTextBox.setText("123");
+//        loginPanel.pwdTextBox.setText("123");
     }
 
     private void initLoginPanel() {
@@ -264,6 +300,15 @@ public class MainWindow extends JFrame {
                 });
             }
         });
+        var records = TaskDispatcher.get().load(port, token);
+        for(var record : records){
+            record.setPort(port);
+            record.setToken(token);
+            TaskView view = new TaskView(record);
+            taskPanel.table.add(view);
+            taskViewHashMap.put(record.getUid(), view);
+            TaskDispatcher.get().add(new Task(record));
+        }
     }
 
     private void login() {
@@ -639,7 +684,7 @@ public class MainWindow extends JFrame {
         TaskView view = new TaskView(record);
         taskPanel.table.add(view);
         taskViewHashMap.put(record.getUid(), view);
-        TaskDispatcher.get().add(new Task(record, 0));
+        TaskDispatcher.get().add(new Task(record));
     }
 
     private void upload() {
@@ -653,7 +698,7 @@ public class MainWindow extends JFrame {
             TaskView view = new TaskView(record);
             taskPanel.table.add(view);
             taskViewHashMap.put(record.getUid(), view);
-            TaskDispatcher.get().add(new Task(record, 0));
+            TaskDispatcher.get().add(new Task(record));
         }
     }
 

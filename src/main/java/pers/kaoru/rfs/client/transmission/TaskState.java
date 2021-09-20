@@ -1,8 +1,6 @@
 package pers.kaoru.rfs.client.transmission;
 
 public enum TaskState {
-    // 任务初始化
-    INIT,
     // 任务正在运行
     RUNNING,
     // 任务暂停

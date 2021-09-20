@@ -11,15 +11,12 @@ import java.net.Socket;
 public class Task implements Runnable {
 
     private final TaskRecord record;
-    private final long start;
     private volatile TaskState state;
     private final String token;
 
-    public Task(TaskRecord record, long start) {
+    public Task(TaskRecord record) {
         this.record = record;
-        this.start = start;
         this.token = record.getToken();
-        state = TaskState.INIT;
     }
 
     public TaskRecord getRecord() {
@@ -60,7 +57,7 @@ public class Task implements Runnable {
                     String rangeStr = response.getHeader("range");
                     assert rangeStr != null;
                     Range temp = Range.RangeBuild(rangeStr);
-                    range = new Range(start, temp.getTotal() - 1, temp.getTotal());
+                    range = new Range(record.getCurrent(), temp.getTotal() - 1, temp.getTotal());
                     record.setLength(range.getTotal());
                 } else {
                     TaskDispatcher.get().onFailed(record, response.getHeader("error"));
@@ -82,7 +79,13 @@ public class Task implements Runnable {
 
                 var webStream = socket.getInputStream();
                 state = TaskState.RUNNING;
-                try (var localStream = new FileOutputStream(record.getLocalUrl() + "/" + record.getName(), true)) {
+                boolean isAppend;
+                if (range.getBegin() == 0) {
+                    isAppend = false;
+                } else {
+                    isAppend = true;
+                }
+                try (var localStream = new FileOutputStream(record.getLocalUrl() + "/" + record.getName(), isAppend)) {
                     long fPos = System.currentTimeMillis();
                     long sPos;
                     long speed = 0;
@@ -91,6 +94,9 @@ public class Task implements Runnable {
                     long count = range.getTotal();
                     while (count > 0) {
                         if (state != TaskState.RUNNING) {
+                            socket.shutdownInput();
+                            socket.shutdownOutput();
+                            socket.close();
                             return;
                         }
                         long current;
@@ -140,7 +146,7 @@ public class Task implements Runnable {
                 if (response.getCode() == ResponseCode.OK) {
                     var webStream = socket.getOutputStream();
                     try (RandomAccessFile localStream = new RandomAccessFile(file, "r")) {
-                        localStream.seek(start);
+                        localStream.seek(record.getCurrent());
 
                         byte[] bytes = new byte[1024];
                         long fPos = System.currentTimeMillis();
@@ -149,6 +155,9 @@ public class Task implements Runnable {
                         int current;
                         while ((current = localStream.read(bytes)) > 0) {
                             if (state != TaskState.RUNNING) {
+                                socket.shutdownInput();
+                                socket.shutdownOutput();
+                                socket.close();
                                 return;
                             }
                             webStream.write(bytes, 0, current);

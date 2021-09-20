@@ -95,4 +95,8 @@ public class TaskRecord implements Serializable {
     public void setPort(int port) {
         this.port = port;
     }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
 }

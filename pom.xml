@@ -4,9 +4,17 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+  <name>RemoteFileSystem</name>
   <groupId>pers.kaoru</groupId>
   <artifactId>RemoteFileSystem</artifactId>
-  <version>1.1[.18]</version>
+  <version>1.1[.20]</version>
+  <developers>
+    <developer>
+      <name>kaoru</name>
+      <email>18877410556@163.com</email>
+      <url>https://github.com/SHIINASAMA/</url>
+    </developer>
+  </developers>
 
   <properties>
     <maven.compiler.source>17</maven.compiler.source>
