@@ -8,7 +8,7 @@ public class TestTask {
 
     public static void main(String[] args) {
         TaskRecordBuilder builder = new TaskRecordBuilder("localhost", 8080, TOKEN);
-        var record = builder.build("/FILE", "/Downloads/心灵终结3.3.5中文整合包.exe", 0, TaskType.UPLOAD);
+        var record = builder.build("/FILE", "/Downloads/心灵终结3.3.5中文整合包.exe", TaskType.UPLOAD);
 
 //        task = new Task(record, 0, new ImplTaskListener() {
 //            @Override

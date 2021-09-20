@@ -105,7 +105,7 @@ public class Task implements Runnable {
                         }
                         count -= length;
                         localStream.write(bytes, 0, (int) length);
-                        record.setCurrent(record.getCurrent() + current);
+                        record.setCurrent(record.getCurrent() + length);
                         sPos = System.currentTimeMillis();
                         if (sPos - fPos > 1000) {
                             fPos = sPos;
@@ -125,6 +125,7 @@ public class Task implements Runnable {
             }
         } else {
             File file = new File(record.getLocalUrl());
+            record.setLength(file.length());
             Range range = new Range(0L, file.length() - 1, file.length());
             Request request = new Request();
             request.setMethod(RequestMethod.UPLOAD);
@@ -147,6 +148,9 @@ public class Task implements Runnable {
                         long speed = 0;
                         int current;
                         while ((current = localStream.read(bytes)) > 0) {
+                            if (state != TaskState.RUNNING) {
+                                return;
+                            }
                             webStream.write(bytes, 0, current);
                             record.setCurrent(record.getCurrent() + current);
                             sPos = System.currentTimeMillis();

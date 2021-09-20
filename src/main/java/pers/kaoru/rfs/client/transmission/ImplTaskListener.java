@@ -10,12 +10,6 @@ public interface ImplTaskListener {
     void onProgress(TaskRecord record, long speed);
 
     /**
-     * 新添加任务
-     * @param record 任务记录
-     */
-    void onNewTask(TaskRecord record);
-
-    /**
      * 任务失败
      * @param record 任务记录
      * @param error 错误描述

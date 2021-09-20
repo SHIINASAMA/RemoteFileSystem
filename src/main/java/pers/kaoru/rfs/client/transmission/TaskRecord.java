@@ -22,11 +22,10 @@ public class TaskRecord implements Serializable {
     private final long createTime;
     private String uid;
 
-    public TaskRecord(String host, int port, String token, String remoteUrl, String localUrl, long length, TaskType type) {
+    public TaskRecord(String host, int port, String token, String remoteUrl, String localUrl, TaskType type) {
         this.host = host;
         this.port = port;
         this.token = token;
-        this.length = length;
         this.remoteUrl = remoteUrl;
         this.localUrl = localUrl;
         this.type = type;

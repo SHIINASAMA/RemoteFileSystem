@@ -16,8 +16,8 @@ public class TaskRecordBuilder {
         this.token = token;
     }
 
-    public TaskRecord build(String remoteUrl, String localUrl, long length, TaskType type) {
-        return new TaskRecord(host, port, token, remoteUrl, localUrl, length, type);
+    public TaskRecord build(String remoteUrl, String localUrl, TaskType type) {
+        return new TaskRecord(host, port, token, remoteUrl, localUrl, type);
     }
 
     public List<TaskRecord> build(String path) {

@@ -9,7 +9,6 @@ public class TaskDispatcher extends Thread {
     private final ExecutorService executorService;
     private final HashMap<String, Task> taskHashMap = new HashMap<>();
     private final ImplTaskListener listener;
-    private final TaskRecordBuilder taskRecordBuilder;
 
     private final BlockingQueue<Task> taskQueue = new LinkedBlockingQueue<>();
     private volatile boolean isQuit = false;
@@ -36,7 +35,6 @@ public class TaskDispatcher extends Thread {
             }
         });
         this.listener = listener;
-        this.taskRecordBuilder = new TaskRecordBuilder(host, port, token);
         start();
     }
 
@@ -76,8 +74,6 @@ public class TaskDispatcher extends Thread {
         var id = task.getRecord().getUid();
         taskHashMap.put(id, task);
         taskQueue.add(task);
-//        listener.onNewTask(task.getRecord());
-        onNewTask(task.getRecord());
         return id;
     }
 
@@ -107,10 +103,10 @@ public class TaskDispatcher extends Thread {
 
     public boolean resume(String taskId) {
         var task = taskHashMap.get(taskId);
-        if (task != null) {
+        if (task != null && task.getState() == TaskState.PAUSED) {
             task.setState(TaskState.RUNNING);
-//            listener.onResume(task.getRecord());
             onResume(task.getRecord());
+            taskQueue.add(task);
             return true;
         }
         return false;
@@ -118,10 +114,6 @@ public class TaskDispatcher extends Thread {
 
     public void onProgress(TaskRecord record, long speed) {
         listener.onProgress(record, speed);
-    }
-
-    public void onNewTask(TaskRecord record) {
-        listener.onNewTask(record);
     }
 
     public void onFailed(TaskRecord record, String error) {

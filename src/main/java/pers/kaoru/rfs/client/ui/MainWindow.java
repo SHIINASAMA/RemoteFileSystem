@@ -17,6 +17,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -27,7 +28,7 @@ public class MainWindow extends JFrame {
 
     private final LoginPanel loginPanel = new LoginPanel();
     private final ViewPanel viewPanel = new ViewPanel();
-    private final DownloadPanel downloadPanel = new DownloadPanel();
+    private final TaskPanel taskPanel = new TaskPanel();
     private String token = "";
 
     private final JPopupMenu viewMenu = new JPopupMenu();
@@ -52,7 +53,7 @@ public class MainWindow extends JFrame {
         initMenu();
         initLoginPanel();
         initViewPanel();
-        initDownloadPanel();
+        initTaskPanel();
 
         setVisible(true);
 
@@ -108,7 +109,7 @@ public class MainWindow extends JFrame {
 
         ImageIcon uploadIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/upload.png")));
         JMenuItem uploadMenu = new JMenuItem("upload", uploadIcon);
-//        uploadMenu.addActionListener();
+        uploadMenu.addActionListener(func -> upload());
         viewMenu.add(uploadMenu);
 
         ImageIcon downloadIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/download.png")));
@@ -186,9 +187,14 @@ public class MainWindow extends JFrame {
         add(viewPanel, "view");
     }
 
-    private void initDownloadPanel() {
-        downloadPanel.backButton.addActionListener(func -> layout.show(getContentPane(), "view"));
-        add(downloadPanel, "download");
+    private void initTaskPanel() {
+        taskPanel.backButton.addActionListener(func -> layout.show(getContentPane(), "view"));
+
+        taskPanel.pauseMenu.addActionListener(func -> pause());
+        taskPanel.resumeMenu.addActionListener(func -> resume());
+        taskPanel.cancelMenu.addActionListener(func -> cancel());
+
+        add(taskPanel, "download");
     }
 
     private void initDispatcher() {
@@ -199,20 +205,12 @@ public class MainWindow extends JFrame {
                 if (view == null) {
                     return;
                 }
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        view.updateProgress();
-                        view.updateSpeed(speed);
-                        view.setState(TaskState.RUNNING);
-                        downloadPanel.updateTable();
-                    }
+                SwingUtilities.invokeLater(() -> {
+                    view.updateProgress();
+                    view.updateSpeed(speed);
+                    view.setState(TaskState.RUNNING);
+                    taskPanel.updateTable();
                 });
-            }
-
-            @Override
-            public void onNewTask(TaskRecord record) {
-
             }
 
             @Override
@@ -222,7 +220,11 @@ public class MainWindow extends JFrame {
 
             @Override
             public void onPaused(TaskRecord record) {
-
+                TaskView view = taskViewHashMap.get(record.getUid());
+                view.updateProgress();
+                view.setState(TaskState.PAUSED);
+                view.getSpeedLabel().setText("0B/S");
+                taskPanel.updateTable();
             }
 
             @Override
@@ -232,27 +234,34 @@ public class MainWindow extends JFrame {
 
             @Override
             public void onResume(TaskRecord record) {
-
+                SwingUtilities.invokeLater(() -> {
+                    TaskView view = taskViewHashMap.get(record.getUid());
+                    view.setState(TaskState.RUNNING);
+                    taskPanel.updateTable();
+                });
             }
 
             @Override
             public void onFinish(TaskRecord record) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        TaskView view = taskViewHashMap.get(record.getUid());
-                        view.setState(TaskState.FINISH);
-                        view.getProgressBar().setValue(100);
-                        view.getFractionLabel().setText(BitCount.ToString(record.getLength()));
-                        view.getSpeedLabel().setText("0B/S");
-                        downloadPanel.updateTable();
-                    }
+                SwingUtilities.invokeLater(() -> {
+                    TaskView view = taskViewHashMap.get(record.getUid());
+                    view.setState(TaskState.FINISH);
+                    view.getProgressBar().setValue(100);
+                    view.getFractionLabel().setText(BitCount.ToString(record.getLength()));
+                    view.getSpeedLabel().setText("0B/S");
+                    taskPanel.updateTable();
                 });
             }
 
             @Override
             public void onCanceled(TaskRecord record) {
-
+                SwingUtilities.invokeLater(() -> {
+                    TaskView view = taskViewHashMap.get(record.getUid());
+                    view.setState(TaskState.CANCELED);
+                    view.getFractionLabel().setText(BitCount.ToString(record.getLength()));
+                    view.getSpeedLabel().setText("0B/S");
+                    taskPanel.updateTable();
+                });
             }
         });
     }
@@ -621,12 +630,60 @@ public class MainWindow extends JFrame {
         }
 
         var file = viewPanel.table.getRow(index);
+        if (file.isDirectory()) {
+            return;
+        }
         String source = router + file.getName();
 
-        TaskRecord record = new TaskRecord(host, port, token, source, config.getDownloadDir(), 0, TaskType.DOWNLOAD);
+        TaskRecord record = new TaskRecord(host, port, token, source, config.getDownloadDir(), TaskType.DOWNLOAD);
         TaskView view = new TaskView(record);
-        downloadPanel.table.add(view);
+        taskPanel.table.add(view);
         taskViewHashMap.put(record.getUid(), view);
         TaskDispatcher.get().add(new Task(record, 0));
+    }
+
+    private void upload() {
+        var director = router.toString();
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        if (fileChooser.showDialog(getContentPane(), "choose") == JFileChooser.APPROVE_OPTION) {
+            var file = fileChooser.getSelectedFile();
+            var name = file.getName();
+            TaskRecord record = new TaskRecord(host, port, token, director + "/" + name, file.getPath(), TaskType.UPLOAD);
+            TaskView view = new TaskView(record);
+            taskPanel.table.add(view);
+            taskViewHashMap.put(record.getUid(), view);
+            TaskDispatcher.get().add(new Task(record, 0));
+        }
+    }
+
+    private void pause() {
+        int index = taskPanel.table.getSelectedIndex();
+        if (index == -1) {
+            return;
+        }
+
+        String taskId = taskPanel.table.getRow(index);
+        TaskDispatcher.get().pause(taskId);
+    }
+
+    private void resume() {
+        int index = taskPanel.table.getSelectedIndex();
+        if (index == -1) {
+            return;
+        }
+
+        String taskId = taskPanel.table.getRow(index);
+        TaskDispatcher.get().resume(taskId);
+    }
+
+    private void cancel() {
+        int index = taskPanel.table.getSelectedIndex();
+        if (index == -1) {
+            return;
+        }
+
+        String taskId = taskPanel.table.getRow(index);
+        TaskDispatcher.get().cancel(taskId);
     }
 }

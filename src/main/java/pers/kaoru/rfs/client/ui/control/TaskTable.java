@@ -56,4 +56,12 @@ public class TaskTable extends JScrollPane {
                 view.getStateLabel()
         });
     }
+
+    public int getSelectedIndex() {
+        return table.getSelectedRow();
+    }
+
+    public String getRow(int index) {
+        return ((JLabel) table.getValueAt(index, 0)).getText();
+    }
 }
