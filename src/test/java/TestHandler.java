@@ -1,5 +1,3 @@
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.Logger;
 import pers.kaoru.rfs.core.FileInfo;
 import pers.kaoru.rfs.core.web.*;
 

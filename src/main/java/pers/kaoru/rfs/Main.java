@@ -1,8 +1,7 @@
 package pers.kaoru.rfs;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.Logger;
+import pers.kaoru.rfs.core.log.Logger;
+import pers.kaoru.rfs.core.log.LoggerManager;
 import pers.kaoru.rfs.server.Config;
 import pers.kaoru.rfs.server.console.Console;
 
@@ -24,8 +23,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        log = (Logger) LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
-        log.setLevel(Level.DEBUG);
+        log = LoggerManager.get();
 
         String path = "./server.json";
         String mode = ARGS_LAUNCH_MODE_CLIENT;
@@ -67,8 +65,8 @@ public class Main {
                 try {
                     config = Config.ConfigBuilder(path);
                     File workdir = new File(config.getWorkDirectory());
-                    if(!workdir.exists() || !workdir.isDirectory()){
-                        throw new FileNotFoundException("no directory named \"" +  config.getWorkDirectory() + "\"");
+                    if (!workdir.exists() || !workdir.isDirectory()) {
+                        throw new FileNotFoundException("no directory named \"" + config.getWorkDirectory() + "\"");
                     }
                 } catch (IOException exception) {
                     log.error(exception.getMessage());
@@ -98,8 +96,8 @@ public class Main {
                 try {
                     Config config = Config.ConfigBuilder(path);
                     File workdir = new File(config.getWorkDirectory());
-                    if(!workdir.exists() || !workdir.isDirectory()){
-                        throw new FileNotFoundException("no directory named \"" +  config.getWorkDirectory() + "\"");
+                    if (!workdir.exists() || !workdir.isDirectory()) {
+                        throw new FileNotFoundException("no directory named \"" + config.getWorkDirectory() + "\"");
                     }
                     printConfig(config);
                     ImplExecutable console = new Console(config);
@@ -131,7 +129,7 @@ public class Main {
     }
 
     private static void version() {
-        InputStream inputStream = Main.class.getResourceAsStream("/res/config.properties");
+        InputStream inputStream = Main.class.getResourceAsStream("/META-INF/MANIFEST.MF");
         assert inputStream != null;
         Properties properties = new Properties();
         try {
@@ -140,17 +138,12 @@ public class Main {
             exception.printStackTrace();
         }
 
-        String major = properties.getProperty("Major");
-        String minor = properties.getProperty("Minor");
-        String rev = properties.getProperty("Revision");
-        String by = properties.getProperty("BuildBy");
-        String date = properties.getProperty("BuildDate");
-
-        System.out.println("Version " + major + "." + minor + "[." + rev + "]");
-        System.out.println(by + " build this package on " + date);
+        for (var item : properties.entrySet()) {
+            System.out.println(item.getKey() + ": " + item.getValue());
+        }
     }
 
-    private static void printConfig(Config config){
+    private static void printConfig(Config config) {
         System.out.println("host:           " + config.getHost());
         System.out.println("port:           " + config.getPort());
         System.out.println("backlog:        " + config.getBacklog());

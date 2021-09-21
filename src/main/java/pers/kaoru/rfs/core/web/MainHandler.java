@@ -1,14 +1,14 @@
 package pers.kaoru.rfs.core.web;
 
-import org.apache.logging.log4j.core.Logger;
+import pers.kaoru.rfs.Main;
 import pers.kaoru.rfs.core.Error;
 import pers.kaoru.rfs.core.FileInfo;
 import pers.kaoru.rfs.core.FileOperator;
 import pers.kaoru.rfs.core.ImplFileOperator;
+import pers.kaoru.rfs.core.log.Logger;
 
 import java.io.*;
 import java.net.Socket;
-import java.rmi.registry.Registry;
 import java.util.LinkedList;
 
 import static pers.kaoru.rfs.core.Error.*;
@@ -20,19 +20,19 @@ public class MainHandler implements ImplHandler {
     private final UserManager userManager;
     private final Logger log;
 
-    public static MainHandler HandlerBuild(String prefixPath, LinkedList<UserInfo> users, Logger logger) {
+    public static MainHandler HandlerBuild(String prefixPath, LinkedList<UserInfo> users) {
         UserManager userManager = new UserManager();
         for (var user : users) {
             userManager.addUser(user);
         }
-        return new MainHandler(prefixPath, userManager, logger);
+        return new MainHandler(prefixPath, userManager);
     }
 
-    private MainHandler(String prefixPath, UserManager userManager, Logger logger) {
+    private MainHandler(String prefixPath, UserManager userManager) {
         this.prefixPath = prefixPath;
         operator = new FileOperator();
         this.userManager = userManager;
-        log = logger;
+        log = Main.log;
     }
 
     @Override

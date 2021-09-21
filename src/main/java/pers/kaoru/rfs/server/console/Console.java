@@ -1,6 +1,6 @@
 package pers.kaoru.rfs.server.console;
 
-import org.apache.logging.log4j.core.Logger;
+import pers.kaoru.rfs.core.log.Logger;
 import pers.kaoru.rfs.core.web.ImplHandler;
 import pers.kaoru.rfs.core.web.MainHandler;
 import pers.kaoru.rfs.ImplExecutable;
@@ -26,7 +26,7 @@ public class Console implements ImplExecutable {
         log.info("service starting");
         serverSocket = new ServerSocket(config.getPort(), config.getBacklog(), InetAddress.getByName(config.getHost()));
         executorService = Executors.newFixedThreadPool(config.getThreads());
-        handler = MainHandler.HandlerBuild(config.getWorkDirectory(), config.getUsers(), log);
+        handler = MainHandler.HandlerBuild(config.getWorkDirectory(), config.getUsers());
         log.info("service start on " + config.getHost() + ":" + config.getPort());
     }
 
