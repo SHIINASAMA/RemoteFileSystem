@@ -144,6 +144,7 @@ public class TaskDispatcher extends Thread {
     }
 
     public void save() {
+        quit();
         LinkedList<TaskRecord> records = new LinkedList<>();
         for (var task : taskHashMap.values()) {
             task.setState(TaskState.PAUSED);
@@ -160,7 +161,7 @@ public class TaskDispatcher extends Thread {
         }
     }
 
-    public LinkedList<TaskRecord> load(int port, String token) {
+    public LinkedList<TaskRecord> load() {
         try {
             InputStream inputStream = new FileInputStream("./tasks.data");
             ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);

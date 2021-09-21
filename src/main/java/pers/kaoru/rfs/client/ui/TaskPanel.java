@@ -4,7 +4,6 @@ import pers.kaoru.rfs.client.ui.control.TaskTable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Objects;
 
@@ -13,7 +12,7 @@ public class TaskPanel extends JPanel {
     public final TaskTable table = new TaskTable();
     public final JButton backButton = new JButton("back");
 
-    private final JPopupMenu menu = new JPopupMenu();
+    public final JPopupMenu menu = new JPopupMenu();
     public JMenuItem pauseMenu;
     public JMenuItem resumeMenu;
     public JMenuItem cancelMenu;
@@ -43,35 +42,6 @@ public class TaskPanel extends JPanel {
         ImageIcon cancelIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/remove.png")));
         cancelMenu = new JMenuItem("cancel", cancelIcon);
         menu.add(cancelMenu);
-
-        table.addMouseListener(new MouseListener() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.getButton() == MouseEvent.BUTTON3) {
-                    menu.show(getParent(), e.getX(), e.getY());
-                }
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-
-            }
-        });
     }
 
     public void updateTable() {
@@ -80,5 +50,9 @@ public class TaskPanel extends JPanel {
 
     public void clear() {
         table.clear();
+    }
+
+    public void addTableMouseListener(MouseListener listener){
+        table.addMouseListener(listener);
     }
 }

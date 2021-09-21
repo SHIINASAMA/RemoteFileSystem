@@ -14,7 +14,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -58,7 +57,7 @@ public class MainWindow extends JFrame {
             config = Config.ConfigBuilder("client.json");
         } catch (IOException e) {
             e.printStackTrace();
-            config = new Config("", 8080, "", "/Downloads");
+            config = new Config("", 8080, "", "./Downloads");
         }
 
         addWindowListener(new WindowListener() {
@@ -104,8 +103,6 @@ public class MainWindow extends JFrame {
         loginPanel.portTextBox.setText(String.valueOf(config.getLastPort()));
         loginPanel.nameTextBox.setText(config.getLastName());
 
-        /// 测试用
-//        loginPanel.pwdTextBox.setText("123");
     }
 
     private void initLoginPanel() {
@@ -229,6 +226,34 @@ public class MainWindow extends JFrame {
         taskPanel.pauseMenu.addActionListener(func -> pause());
         taskPanel.resumeMenu.addActionListener(func -> resume());
         taskPanel.cancelMenu.addActionListener(func -> cancel());
+        taskPanel.addTableMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON3) {
+                    taskPanel.menu.show(getContentPane(), e.getX(), e.getY());
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
 
         add(taskPanel, "download");
     }
@@ -251,7 +276,17 @@ public class MainWindow extends JFrame {
 
             @Override
             public void onFailed(TaskRecord record, String error) {
-
+                TaskView view = taskViewHashMap.get(record.getUid());
+                if (view == null) {
+                    return;
+                }
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(getParent(), "task '" + record.getName() + "' fail, " + error);
+                    view.updateProgress();
+                    view.getSpeedLabel().setText("0B/S");
+                    view.setState(TaskState.FAILED);
+                    taskPanel.updateTable();
+                });
             }
 
             @Override
@@ -300,8 +335,8 @@ public class MainWindow extends JFrame {
                 });
             }
         });
-        var records = TaskDispatcher.get().load(port, token);
-        for(var record : records){
+        var records = TaskDispatcher.get().load();
+        for (var record : records) {
             record.setPort(port);
             record.setToken(token);
             TaskView view = new TaskView(record);
