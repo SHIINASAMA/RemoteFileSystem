@@ -118,6 +118,11 @@ public class MainWindow extends JFrame {
 
         viewMenu.add(new JSeparator());
 
+        ImageIcon renameIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/rename.png")));
+        JMenuItem renameMenu = new JMenuItem("rename", renameIcon);
+        renameMenu.addActionListener(func -> rename());
+        viewMenu.add(renameMenu);
+
         ImageIcon mkdirIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/newdir.png")));
         JMenuItem mkdirMenu = new JMenuItem("new directory", mkdirIcon);
         mkdirMenu.addActionListener(func -> newDir());
@@ -765,5 +770,54 @@ public class MainWindow extends JFrame {
 
         String taskId = taskPanel.table.getRow(index);
         TaskDispatcher.get().cancel(taskId);
+    }
+
+    private void rename() {
+        int index = viewPanel.table.getSelectedIndex();
+        if (index == -1) {
+            return;
+        }
+        FileInfo info = viewPanel.table.getRow(index);
+        String source = router + info.getName();
+
+        String des = JOptionPane.showInputDialog(getContentPane(), "rename a file/directory");
+        if (des == null) {
+            return;
+        }
+        char[] chars = {'\"', '*', '?', '<', '>', '|'};
+        for (char c : chars) {
+            if (des.indexOf(c) != -1) {
+                JOptionPane.showMessageDialog(getContentPane(), "illegal name");
+                return;
+            }
+        }
+
+        des = router + des;
+        String finalDes = des;
+
+        new SwingWorker<Response, Void>() {
+            @Override
+            protected void done() {
+                Response response = null;
+                try {
+                    response = get();
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(getContentPane(), e.getMessage());
+                    return;
+                }
+
+                if (response.getCode() == ResponseCode.OK) {
+                    refresh(false, "/");
+                } else {
+                    JOptionPane.showMessageDialog(getContentPane(), response.getHeader("error"));
+                }
+            }
+
+            @Override
+            protected Response doInBackground() throws Exception {
+                return ClientUtils.Move(host, port, source, finalDes, token);
+            }
+        }.execute();
     }
 }
