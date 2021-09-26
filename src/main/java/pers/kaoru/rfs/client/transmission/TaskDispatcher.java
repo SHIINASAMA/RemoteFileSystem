@@ -143,13 +143,15 @@ public class TaskDispatcher extends Thread {
         listener.onCanceled(record);
     }
 
-    public void save() {
+    public void save(LinkedList<TaskRecord> otherTask) {
         quit();
         LinkedList<TaskRecord> records = new LinkedList<>();
         for (var task : taskHashMap.values()) {
             task.setState(TaskState.PAUSED);
             records.add(task.getRecord());
         }
+
+        records.addAll(otherTask);
 
         try {
             OutputStream outputStream = new FileOutputStream("./tasks.data");

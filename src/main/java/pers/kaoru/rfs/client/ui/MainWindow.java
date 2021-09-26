@@ -15,6 +15,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
@@ -36,6 +37,7 @@ public class MainWindow extends JFrame {
     private Config config;
 
     private final HashMap<String, TaskView> taskViewHashMap = new HashMap<>();
+    private final LinkedList<TaskRecord> otherTasks = new LinkedList<>();
 
     public MainWindow() {
         ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/res/icon.png")));
@@ -69,7 +71,7 @@ public class MainWindow extends JFrame {
             @Override
             public void windowClosing(WindowEvent e) {
                 if (!token.isEmpty()) {
-                    TaskDispatcher.get().save();
+                    TaskDispatcher.get().save(otherTasks);
                 }
             }
 
@@ -342,12 +344,16 @@ public class MainWindow extends JFrame {
         });
         var records = TaskDispatcher.get().load();
         for (var record : records) {
-            record.setPort(port);
-            record.setToken(token);
-            TaskView view = new TaskView(record);
-            taskPanel.table.add(view);
-            taskViewHashMap.put(record.getUid(), view);
-            TaskDispatcher.get().add(new Task(record));
+            if (record.getHost().equals(host)) {
+                record.setPort(port);
+                record.setToken(token);
+                TaskView view = new TaskView(record);
+                taskPanel.table.add(view);
+                taskViewHashMap.put(record.getUid(), view);
+                TaskDispatcher.get().add(new Task(record));
+            } else {
+                otherTasks.add(record);
+            }
         }
     }
 
@@ -780,7 +786,7 @@ public class MainWindow extends JFrame {
         FileInfo info = viewPanel.table.getRow(index);
         String source = router + info.getName();
 
-        String des = JOptionPane.showInputDialog(getContentPane(), "rename a file/directory");
+        String des = JOptionPane.showInputDialog(getContentPane(), "rename a file/directory", info.getName());
         if (des == null) {
             return;
         }
