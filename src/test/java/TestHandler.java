@@ -22,7 +22,8 @@ public class TestHandler extends Thread {
 //        testMakeDirectory();
 //        testUpload();
 //        testDownload();
-        testVerify();
+//        testVerify();
+        System.out.println(System.getProperty("os.name"));
     }
 
     @Override

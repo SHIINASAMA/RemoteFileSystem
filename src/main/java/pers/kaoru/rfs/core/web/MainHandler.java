@@ -15,6 +15,25 @@ import static pers.kaoru.rfs.core.Error.*;
 
 public class MainHandler implements ImplHandler {
 
+    // 在 Windows 下一些不应该被访问的文件夹
+    private static final String[] ILLEGAL_FILE_NAME = {
+            "$WINREAGENT",
+            "$RECYCLE.BIN",
+            "SYSTEM VOLUME INFORMATION",
+            "DOCUMENTS AND SETTINGS",
+            "WINDOWSAPPS",
+            "WPSYSTEM",
+            "CONFIG.MSI",
+            "CON",
+            "COM1",
+            "PRN",
+            "NUL",
+            "LPT1",
+            "AUX",
+            "RECOVERY"
+    };
+    private static final boolean IS_WINDOWS = System.getProperty("os.name").toUpperCase().contains("WINDOWS");
+
     private final ImplFileOperator operator;
     private final String prefixPath;
     private final UserManager userManager;
@@ -75,6 +94,16 @@ public class MainHandler implements ImplHandler {
             log.warn(ILLEGAL_PATH + ": " + path);
             return false;
         }
+
+        if(IS_WINDOWS){
+            for(String name : ILLEGAL_FILE_NAME){
+                if(path.toUpperCase().contains(name)){
+                    log.warn(ILLEGAL_PATH + ": " + path);
+                    return false;
+                }
+            }
+        }
+
         return true;
     }
 
@@ -129,6 +158,8 @@ public class MainHandler implements ImplHandler {
         }
 
         if (!checkPath(source)) {
+            response.setCode(ResponseCode.FAIL);
+            response.setError(ILLEGAL_PATH);
             return;
         }
 
@@ -165,6 +196,8 @@ public class MainHandler implements ImplHandler {
         }
 
         if (!checkPath(source)) {
+            response.setCode(ResponseCode.FAIL);
+            response.setError(ILLEGAL_PATH);
             return;
         }
 
@@ -209,6 +242,8 @@ public class MainHandler implements ImplHandler {
         }
 
         if (!checkPath(source) && !checkPath(destination)) {
+            response.setCode(ResponseCode.FAIL);
+            response.setError(ILLEGAL_PATH);
             return;
         }
 
@@ -245,6 +280,8 @@ public class MainHandler implements ImplHandler {
         }
 
         if (!checkPath(source) && !checkPath(destination)) {
+            response.setCode(ResponseCode.FAIL);
+            response.setError(ILLEGAL_PATH);
             return;
         }
 
@@ -281,6 +318,8 @@ public class MainHandler implements ImplHandler {
         }
 
         if (!checkPath(source)) {
+            response.setCode(ResponseCode.FAIL);
+            response.setError(ILLEGAL_PATH);
             return;
         }
 
@@ -317,6 +356,9 @@ public class MainHandler implements ImplHandler {
         }
 
         if (!checkPath(source)) {
+            response.setCode(ResponseCode.FAIL);
+            response.setError(ILLEGAL_PATH);
+            WebUtils.WriteResponse(socket, response);
             return;
         }
 
@@ -394,6 +436,9 @@ public class MainHandler implements ImplHandler {
         }
 
         if (!checkPath(source)) {
+            response.setCode(ResponseCode.FAIL);
+            response.setError(ILLEGAL_PATH);
+            WebUtils.WriteResponse(socket, response);
             return;
         }
 
