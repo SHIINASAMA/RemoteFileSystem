@@ -17,20 +17,12 @@ public class MainHandler implements ImplHandler {
 
     // 在 Windows 下一些不应该被访问的文件夹
     private static final String[] ILLEGAL_FILE_NAME = {
-            "$WINREAGENT",
-            "$RECYCLE.BIN",
-            "SYSTEM VOLUME INFORMATION",
-            "DOCUMENTS AND SETTINGS",
-            "WINDOWSAPPS",
-            "WPSYSTEM",
-            "CONFIG.MSI",
             "CON",
             "COM1",
             "PRN",
             "NUL",
             "LPT1",
-            "AUX",
-            "RECOVERY"
+            "AUX"
     };
     private static final boolean IS_WINDOWS = System.getProperty("os.name").toUpperCase().contains("WINDOWS");
 
@@ -166,6 +158,12 @@ public class MainHandler implements ImplHandler {
         File srcFile = new File(prefixPath + source);
         if (srcFile.exists() && srcFile.isDirectory()) {
             File[] files = operator.listShow(srcFile);
+            if(files == null){
+                log.warn(ACCESS_FAILED + ": " + source);
+                response.setCode(ResponseCode.FAIL);
+                response.setError(ACCESS_FAILED);
+                return;
+            }
             LinkedList<FileInfo> list = new LinkedList<>();
             for (File file : files) {
                 list.add(new FileInfo(file));

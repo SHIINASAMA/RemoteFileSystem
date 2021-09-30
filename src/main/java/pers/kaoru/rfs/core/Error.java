@@ -16,5 +16,6 @@ public enum Error {
     FILE_ALREADY_EXIST,     // 文件已经存在
     CREATE_FILE_FAIL,       // 创建文件失败
     ILLEGAL_SEEK_LOCATION,  // 非法的文件流跳转
-    WRONG_PASSWORD          // 密码错误
+    WRONG_PASSWORD,         // 密码错误
+    ACCESS_FAILED           // 访问错误
 }
