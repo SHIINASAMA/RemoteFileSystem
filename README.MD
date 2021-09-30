@@ -93,22 +93,14 @@
 对包含以下字段的所有请求，采取设置错误信息的操作（ILLEGAL_PATH）。
 
 ```txt
-$WinREAgent
-$RECYCLE.BIN
-System Volume Infomation
-Documents and Settings
-WindowsApps
-WpSystem
-Config.Msi
 CON
 COM1
 PRN
 NUL
 LPT1
 AUX
-Recovery
 ```
 
 ## 免责声明
 
-本项目主要是本人在局域网下使用，做多平台文件传输。我无法保证数据的绝对安全，使用本软件带来的安全问题需要用户自行承担。若确实存在问题，也可以与我进行沟通和交流或者提issue（反正估计也就我自己当玩具玩玩了）。
+**本项目**主要是**本人**在**局域网**下使用，做多平台文件传输。我**无法**保证数据的绝对安全，使用本软件带来的安全问题需要用户自行承担。若确实存在问题，也可以与我进行沟通和交流或者提issue（反正估计也就我自己当玩具玩玩了）。
