@@ -29,7 +29,9 @@ public class FileOperator implements ImplFileOperator {
 
     private boolean removeDirectory(File source) {
         File[] files = source.listFiles();
-        assert files != null;
+        if(files == null){
+            return false;
+        }
         for (var file : files) {
             if (file.isFile()) {
                 if (!file.delete()) {
